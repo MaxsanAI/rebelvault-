@@ -2,7 +2,7 @@ interface Env {
   DB: D1Database;
 }
 
-type MovieRow = {
+interface MovieRow {
   id: string;
   title: string;
   year: number;
@@ -13,7 +13,7 @@ type MovieRow = {
   embed: string;
   featured: number;
   created_at: string;
-};
+}
 
 function json(
   data: Record<string, unknown>,
@@ -22,18 +22,21 @@ function json(
   return Response.json(data, {
     status,
     headers: {
-      'Cache-Control': 'no-store',
+      'Content-Type': 'application/json; charset=utf-8',
+      'Cache-Control': 'no-store, no-cache, must-revalidate',
     },
   });
 }
 
-export const onRequestGet: PagesFunction<Env> = async (context) => {
+export const onRequestGet: PagesFunction<Env> = async (
+  context
+) => {
   try {
     if (!context.env.DB) {
       return json(
         {
           success: false,
-          error: 'D1 database binding "DB" is not configured.',
+          error: 'D1 database binding DB is not configured.',
         },
         500
       );
@@ -53,9 +56,7 @@ export const onRequestGet: PagesFunction<Env> = async (context) => {
           featured,
           created_at
         FROM movies
-        ORDER BY
-          featured DESC,
-          created_at DESC`
+        ORDER BY featured DESC, created_at DESC`
       )
       .all<MovieRow>();
 
