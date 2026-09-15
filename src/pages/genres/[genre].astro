@@ -1,0 +1,191 @@
+---
+import Layout from '../../layouts/Layout.astro';
+import { movies } from '../../data/movies';
+
+const availableGenres = [
+  'Action',
+  'Horror',
+  'Sci-Fi',
+  'Thriller',
+  'Comedy',
+  'Drama',
+  'Crime',
+  'Adventure',
+];
+
+export function getStaticPaths() {
+  return availableGenres.map((genre) => ({
+    params: {
+      genre: genre.toLowerCase(),
+    },
+    props: {
+      genre,
+    },
+  }));
+}
+
+const { genre } = Astro.props;
+
+const genreMovies = movies.filter(
+  (movie) =>
+    movie.genre.toLowerCase() === genre.toLowerCase()
+);
+
+const genreDescription: Record<string, string> = {
+  Action:
+    'Adrenaline, chaos, impossible missions and movies that never slow down.',
+  Horror:
+    'Nightmares, monsters, darkness and stories designed to get under your skin.',
+  'Sci-Fi':
+    'Future worlds, strange technology, alternate realities and impossible ideas.',
+  Thriller:
+    'Suspense, paranoia, secrets and stories that keep you guessing.',
+  Comedy:
+    'Laughs, chaos, ridiculous situations and characters making questionable decisions.',
+  Drama:
+    'Character-driven stories, difficult choices and movies with something to say.',
+  Crime:
+    'Heists, criminals, detectives and morally grey characters.',
+  Adventure:
+    'Journeys, discoveries, dangerous places and worlds waiting to be explored.',
+};
+
+const description =
+  genreDescription[genre] ??
+  `Explore ${genre} movies inside the REBELVAULT collection.`;
+---
+
+<Layout
+  title={`${genre} Movies — REBELVAULT`}
+  description={description}
+>
+
+  <section class="section page-section">
+
+    <div class="section-header">
+
+      <div>
+
+        <a
+          href="/genres"
+          class="back-link"
+        >
+          ← ALL GENRES
+        </a>
+
+        <div
+          class="eyebrow"
+          style="margin-top:24px;"
+        >
+          GENRE
+        </div>
+
+        <h1 class="section-title">
+          {genre}
+        </h1>
+
+        <p
+          style="
+            max-width:650px;
+            margin:18px 0 0;
+            color:#969aa3;
+            line-height:1.7;
+          "
+        >
+          {description}
+        </p>
+
+      </div>
+
+      <span class="movie-count">
+        {genreMovies.length}
+        {genreMovies.length === 1 ? ' movie' : ' movies'}
+      </span>
+
+    </div>
+
+
+    {
+      genreMovies.length > 0 ? (
+        <div class="movie-grid">
+
+          {genreMovies.map((movie) => (
+            <a
+              href={`/movie/${movie.id}`}
+              class="movie-card"
+            >
+
+              <div class="poster">
+
+                <img
+                  src={movie.poster}
+                  alt={movie.title}
+                  loading="lazy"
+                />
+
+                <span class="poster-play">
+                  ▶
+                </span>
+
+              </div>
+
+              <h2 class="movie-title">
+                {movie.title}
+              </h2>
+
+              <p class="movie-meta">
+                {movie.year} · {movie.genre}
+              </p>
+
+            </a>
+          ))}
+
+        </div>
+      ) : (
+        <div class="empty-state">
+
+          <div class="empty-icon">
+            ✦
+          </div>
+
+          <h2>
+            Nothing here yet.
+          </h2>
+
+          <p>
+            There are no {genre.toLowerCase()} movies in the vault yet.
+          </p>
+
+          <div
+            style="
+              display:flex;
+              gap:12px;
+              justify-content:center;
+              flex-wrap:wrap;
+              margin-top:26px;
+            "
+          >
+
+            <a
+              href="/movies"
+              class="btn btn-primary"
+            >
+              BROWSE ALL MOVIES
+            </a>
+
+            <a
+              href="/genres"
+              class="btn btn-accent"
+            >
+              ALL GENRES
+            </a>
+
+          </div>
+
+        </div>
+      )
+    }
+
+  </section>
+
+</Layout>
