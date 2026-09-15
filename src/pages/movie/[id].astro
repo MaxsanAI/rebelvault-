@@ -1,0 +1,271 @@
+---
+import Layout from '../../layouts/Layout.astro';
+import { movies } from '../../data/movies';
+
+const monetagLink = 'https://omg10.com/4/9027972';
+
+export function getStaticPaths() {
+  return movies.map((movie) => ({
+    params: {
+      id: movie.id,
+    },
+    props: {
+      movie,
+    },
+  }));
+}
+
+const { movie } = Astro.props;
+
+const relatedMovies = movies
+  .filter((item) => item.id !== movie.id)
+  .filter(
+    (item) =>
+      item.genre.toLowerCase() === movie.genre.toLowerCase()
+  )
+  .slice(0, 4);
+
+const fallbackMovies =
+  relatedMovies.length > 0
+    ? relatedMovies
+    : movies.filter((item) => item.id !== movie.id).slice(0, 4);
+---
+
+<Layout
+  title={`${movie.title} — REBELVAULT`}
+  description={movie.description}
+>
+
+  <section class="watch-page">
+
+    <div class="watch-header">
+
+      <a
+        href="/movies"
+        class="back-link"
+      >
+        ← BACK TO MOVIES
+      </a>
+
+      <div class="eyebrow">
+        NOW PLAYING
+      </div>
+
+      <h1>
+        {movie.title}
+      </h1>
+
+      <div class="hero-meta">
+        <span>{movie.year}</span>
+        <span class="dot">•</span>
+        <span>{movie.genre}</span>
+      </div>
+
+    </div>
+
+
+    <!-- MONETAG WATCH GATE -->
+
+    <section class="watch-gate">
+
+      <div class="watch-gate-content">
+
+        <span class="watch-gate-label">
+          READY TO WATCH?
+        </span>
+
+        <h2>
+          Enter the movie.
+        </h2>
+
+        <p>
+          Continue through REBELVAULT and start watching.
+        </p>
+
+        <a
+          href={monetagLink}
+          class="btn btn-primary watch-gate-button"
+          target="_blank"
+          rel="noopener noreferrer"
+        >
+          ▶ WATCH MOVIE
+        </a>
+
+        <span class="watch-gate-note">
+          Opens in a new tab
+        </span>
+
+      </div>
+
+    </section>
+
+
+    <!-- VIDEO -->
+
+    <div class="player-container">
+
+      <div class="player-frame">
+
+        <iframe
+          src={movie.embed}
+          title={movie.title}
+          loading="lazy"
+          allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+          allowfullscreen
+          referrerpolicy="strict-origin-when-cross-origin"
+        ></iframe>
+
+      </div>
+
+    </div>
+
+
+    <!-- MOVIE DETAILS -->
+
+    <div class="watch-details">
+
+      <div>
+
+        <div class="eyebrow">
+          ABOUT THE MOVIE
+        </div>
+
+        <h2>
+          {movie.title}
+        </h2>
+
+        <p>
+          {movie.description}
+        </p>
+
+      </div>
+
+      <div class="watch-meta">
+
+        <div>
+          <span>YEAR</span>
+          <strong>{movie.year}</strong>
+        </div>
+
+        <div>
+          <span>GENRE</span>
+          <strong>{movie.genre}</strong>
+        </div>
+
+      </div>
+
+    </div>
+
+
+    <!-- SECOND MONETAG CTA -->
+
+    <section class="watch-cta">
+
+      <div>
+
+        <span class="eyebrow">
+          KEEP EXPLORING
+        </span>
+
+        <h2>
+          Looking for something else?
+        </h2>
+
+        <p>
+          Discover another movie from the REBELVAULT collection.
+        </p>
+
+      </div>
+
+      <div class="watch-cta-actions">
+
+        <a
+          href={monetagLink}
+          class="btn btn-primary"
+          target="_blank"
+          rel="noopener noreferrer"
+        >
+          CONTINUE WATCHING
+        </a>
+
+        <a
+          href="/random"
+          class="btn btn-accent"
+        >
+          🎲 RANDOM MOVIE
+        </a>
+
+      </div>
+
+    </section>
+
+
+    <!-- RELATED -->
+
+    {
+      fallbackMovies.length > 0 && (
+        <section class="section related-section">
+
+          <div class="section-header">
+
+            <div>
+              <div class="eyebrow">
+                YOU MAY ALSO LIKE
+              </div>
+
+              <h2 class="section-title">
+                More from the Vault
+              </h2>
+            </div>
+
+            <a
+              href="/movies"
+              class="section-link"
+            >
+              View all →
+            </a>
+
+          </div>
+
+          <div class="movie-grid">
+
+            {fallbackMovies.map((related) => (
+              <a
+                href={`/movie/${related.id}`}
+                class="movie-card"
+              >
+
+                <div class="poster">
+
+                  <img
+                    src={related.poster}
+                    alt={related.title}
+                    loading="lazy"
+                  />
+
+                  <span class="poster-play">
+                    ▶
+                  </span>
+
+                </div>
+
+                <h3 class="movie-title">
+                  {related.title}
+                </h3>
+
+                <p class="movie-meta">
+                  {related.year} · {related.genre}
+                </p>
+
+              </a>
+            ))}
+
+          </div>
+
+        </section>
+      )
+    }
+
+  </section>
+
+</Layout>
