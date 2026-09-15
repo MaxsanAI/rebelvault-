@@ -1,8 +1,14 @@
 ---
 import Layout from '../layouts/Layout.astro';
-import { movies } from '../data/movies';
+import { getMovies } from '../lib/movies';
 
-const sortedMovies = [...movies].sort((a, b) => b.year - a.year);
+const runtimeEnv = Astro.locals.runtime?.env;
+
+if (!runtimeEnv?.DB) {
+  throw new Error('D1 database binding DB is not configured.');
+}
+
+const movies = await getMovies(runtimeEnv.DB);
 ---
 
 <Layout
@@ -13,8 +19,11 @@ const sortedMovies = [...movies].sort((a, b) => b.year - a.year);
   <section class="section page-section">
 
     <div class="section-header">
+
       <div>
-        <div class="eyebrow">THE VAULT</div>
+        <div class="eyebrow">
+          THE VAULT
+        </div>
 
         <h1 class="section-title">
           All Movies
@@ -22,15 +31,17 @@ const sortedMovies = [...movies].sort((a, b) => b.year - a.year);
       </div>
 
       <span class="movie-count">
-        {movies.length} {movies.length === 1 ? 'movie' : 'movies'}
+        {movies.length}
+        {movies.length === 1 ? ' movie' : ' movies'}
       </span>
+
     </div>
 
     {
-      sortedMovies.length > 0 ? (
+      movies.length > 0 ? (
         <div class="movie-grid">
 
-          {sortedMovies.map((movie) => (
+          {movies.map((movie, index) => (
             <a
               href={`/movie/${movie.id}`}
               class="movie-card"
@@ -41,12 +52,32 @@ const sortedMovies = [...movies].sort((a, b) => b.year - a.year);
                 <img
                   src={movie.poster}
                   alt={movie.title}
-                  loading="lazy"
+                  loading={index < 4 ? 'eager' : 'lazy'}
                 />
 
                 <span class="poster-play">
                   ▶
                 </span>
+
+                {movie.featured && (
+                  <span
+                    style="
+                      position:absolute;
+                      top:12px;
+                      left:12px;
+                      z-index:3;
+                      padding:7px 10px;
+                      border-radius:5px;
+                      background:rgba(255,73,56,.92);
+                      color:#fff;
+                      font-size:10px;
+                      font-weight:800;
+                      letter-spacing:1px;
+                    "
+                  >
+                    FEATURED
+                  </span>
+                )}
 
               </div>
 
@@ -69,10 +100,13 @@ const sortedMovies = [...movies].sort((a, b) => b.year - a.year);
             ✦
           </div>
 
-          <h2>The vault is empty.</h2>
+          <h2>
+            The vault is empty.
+          </h2>
 
           <p>
-            New movies will appear here once they are added to REBELVAULT.
+            Your movie collection will appear here once you publish
+            your first title through Vault Control.
           </p>
 
           <a
