@@ -1,111 +1,54 @@
 import type { APIRoute } from 'astro';
-import { createAdminCookie } from '../../../../lib/admin-auth';
+import { createAdminCookie } from '../../../lib/admin-auth';
 
-function json(
-  data: Record<string, unknown>,
-  status = 200,
-  headers: Record<string, string> = {}
-): Response {
-  return Response.json(data, {
-    status,
-    headers: {
-      'Cache-Control':
-        'no-store, no-cache, must-revalidate',
-      ...headers,
-    },
-  });
-}
-
-export const POST: APIRoute = async ({
-  request,
-  locals,
-}) => {
+export const POST: APIRoute = async ({ request, locals }) => {
   try {
-    const adminPassword =
-      locals.runtime.env.ADMIN_PASSWORD;
+    const body = await request.json();
+    const password = String(body?.password ?? '');
 
-    if (!adminPassword) {
-      return json(
-        {
+    const adminPassword = locals.runtime.env.ADMIN_PASSWORD;
+
+    if (!adminPassword || password !== adminPassword) {
+      return new Response(
+        JSON.stringify({
           success: false,
-          error:
-            'ADMIN_PASSWORD secret is not configured.',
-        },
-        500
+          error: 'Invalid password',
+        }),
+        {
+          status: 401,
+          headers: {
+            'Content-Type': 'application/json',
+          },
+        }
       );
     }
 
-    let body: {
-      password?: string;
-    };
+    const cookie = await createAdminCookie(adminPassword);
 
-    try {
-      body =
-        await request.json<{
-          password?: string;
-        }>();
-    } catch {
-      return json(
-        {
-          success: false,
-          error: 'Invalid request.',
-        },
-        400
-      );
-    }
-
-    const password = String(
-      body.password ?? ''
-    );
-
-    if (!password) {
-      return json(
-        {
-          success: false,
-          error: 'Password is required.',
-        },
-        400
-      );
-    }
-
-    if (password !== adminPassword) {
-      return json(
-        {
-          success: false,
-          error: 'Invalid password.',
-        },
-        401
-      );
-    }
-
-    const cookie =
-      await createAdminCookie(
-        adminPassword
-      );
-
-    return json(
-      {
+    return new Response(
+      JSON.stringify({
         success: true,
-        message:
-          'Authentication successful.',
-      },
-      200,
+      }),
       {
-        'Set-Cookie': cookie,
+        status: 200,
+        headers: {
+          'Content-Type': 'application/json',
+          'Set-Cookie': cookie,
+        },
       }
     );
-  } catch (error) {
-    console.error(
-      'REBELVAULT login error:',
-      error
-    );
-
-    return json(
-      {
+  } catch {
+    return new Response(
+      JSON.stringify({
         success: false,
-        error: 'Unable to authenticate.',
-      },
-      500
+        error: 'Invalid request',
+      }),
+      {
+        status: 400,
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      }
     );
   }
 };
