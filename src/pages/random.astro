@@ -1,6 +1,14 @@
 ---
 import Layout from '../layouts/Layout.astro';
-import { movies } from '../data/movies';
+import { getMovies } from '../lib/movies';
+
+const runtimeEnv = Astro.locals.runtime?.env;
+
+if (!runtimeEnv?.DB) {
+  throw new Error('D1 database binding DB is not configured.');
+}
+
+const movies = await getMovies(runtimeEnv.DB);
 
 const randomMovie =
   movies.length > 0
@@ -28,58 +36,56 @@ const randomMovie =
 
       {
         randomMovie ? (
-          <>
-            <div class="random-card">
+          <div class="random-card">
 
-              <div class="random-poster">
+            <div class="random-poster">
 
-                <img
-                  src={randomMovie.poster}
-                  alt={randomMovie.title}
-                />
+              <img
+                src={randomMovie.poster}
+                alt={randomMovie.title}
+              />
 
-              </div>
+            </div>
 
-              <div class="random-info">
+            <div class="random-info">
 
-                <span class="random-label">
-                  REBELVAULT PICK
-                </span>
+              <span class="random-label">
+                REBELVAULT PICK
+              </span>
 
-                <h2>
-                  {randomMovie.title}
-                </h2>
+              <h2>
+                {randomMovie.title}
+              </h2>
 
-                <p class="movie-meta">
-                  {randomMovie.year} · {randomMovie.genre}
-                </p>
+              <p class="movie-meta">
+                {randomMovie.year} · {randomMovie.genre}
+              </p>
 
-                <p class="random-description">
-                  {randomMovie.description}
-                </p>
+              <p class="random-description">
+                {randomMovie.description}
+              </p>
 
-                <div class="random-actions">
+              <div class="random-actions">
 
-                  <a
-                    href={`/movie/${randomMovie.id}`}
-                    class="btn btn-primary"
-                  >
-                    ▶ WATCH MOVIE
-                  </a>
+                <a
+                  href={`/movie/${randomMovie.id}`}
+                  class="btn btn-primary"
+                >
+                  ▶ WATCH MOVIE
+                </a>
 
-                  <a
-                    href="/random"
-                    class="btn btn-accent"
-                  >
-                    🎲 PICK AGAIN
-                  </a>
-
-                </div>
+                <a
+                  href="/random"
+                  class="btn btn-accent"
+                >
+                  🎲 PICK AGAIN
+                </a>
 
               </div>
 
             </div>
-          </>
+
+          </div>
         ) : (
           <div class="empty-state">
 
@@ -92,7 +98,8 @@ const randomMovie =
             </h2>
 
             <p>
-              Add your first movie to generate a random recommendation.
+              Add your first movie through Vault Control
+              to generate a random recommendation.
             </p>
 
             <a
