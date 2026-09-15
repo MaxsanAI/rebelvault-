@@ -1,12 +1,16 @@
 ---
 import Layout from '../layouts/Layout.astro';
-import { movies } from '../data/movies';
+import { getMovies } from '../lib/movies';
 
-const trendingMovies = [...movies].sort((a, b) => {
-  if (a.featured && !b.featured) return -1;
-  if (!a.featured && b.featured) return 1;
-  return b.year - a.year;
-});
+const runtimeEnv = Astro.locals.runtime?.env;
+
+if (!runtimeEnv?.DB) {
+  throw new Error('D1 database binding DB is not configured.');
+}
+
+const movies = await getMovies(runtimeEnv.DB);
+
+const trendingMovies = movies.slice(0, 20);
 ---
 
 <Layout
@@ -55,10 +59,6 @@ const trendingMovies = [...movies].sort((a, b) => {
                   loading={index < 4 ? 'eager' : 'lazy'}
                 />
 
-                <span class="poster-play">
-                  ▶
-                </span>
-
                 {index < 3 && (
                   <span
                     style="
@@ -78,6 +78,10 @@ const trendingMovies = [...movies].sort((a, b) => {
                     TRENDING
                   </span>
                 )}
+
+                <span class="poster-play">
+                  ▶
+                </span>
 
               </div>
 
@@ -105,7 +109,8 @@ const trendingMovies = [...movies].sort((a, b) => {
           </h2>
 
           <p>
-            Once movies are added to the vault, the trending collection will appear here.
+            Once movies are published to the vault,
+            they will appear here.
           </p>
 
           <a
