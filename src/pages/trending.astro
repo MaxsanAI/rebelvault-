@@ -1,0 +1,124 @@
+---
+import Layout from '../layouts/Layout.astro';
+import { movies } from '../data/movies';
+
+const trendingMovies = [...movies].sort((a, b) => {
+  if (a.featured && !b.featured) return -1;
+  if (!a.featured && b.featured) return 1;
+  return b.year - a.year;
+});
+---
+
+<Layout
+  title="Trending — REBELVAULT"
+  description="See what is trending inside the REBELVAULT."
+>
+
+  <section class="section page-section">
+
+    <div class="section-header">
+
+      <div>
+        <div class="eyebrow">
+          WHAT'S MOVING
+        </div>
+
+        <h1 class="section-title">
+          Trending Now
+        </h1>
+      </div>
+
+      <a
+        href="/movies"
+        class="section-link"
+      >
+        All movies →
+      </a>
+
+    </div>
+
+    {
+      trendingMovies.length > 0 ? (
+        <div class="movie-grid">
+
+          {trendingMovies.map((movie, index) => (
+            <a
+              href={`/movie/${movie.id}`}
+              class="movie-card"
+            >
+
+              <div class="poster">
+
+                <img
+                  src={movie.poster}
+                  alt={movie.title}
+                  loading={index < 4 ? 'eager' : 'lazy'}
+                />
+
+                <span class="poster-play">
+                  ▶
+                </span>
+
+                {index < 3 && (
+                  <span
+                    style="
+                      position:absolute;
+                      top:12px;
+                      left:12px;
+                      z-index:3;
+                      padding:7px 10px;
+                      border-radius:5px;
+                      background:rgba(255,73,56,.92);
+                      color:#fff;
+                      font-size:10px;
+                      font-weight:800;
+                      letter-spacing:1px;
+                    "
+                  >
+                    TRENDING
+                  </span>
+                )}
+
+              </div>
+
+              <h2 class="movie-title">
+                {movie.title}
+              </h2>
+
+              <p class="movie-meta">
+                {movie.year} · {movie.genre}
+              </p>
+
+            </a>
+          ))}
+
+        </div>
+      ) : (
+        <div class="empty-state">
+
+          <div class="empty-icon">
+            ↗
+          </div>
+
+          <h2>
+            Nothing trending yet.
+          </h2>
+
+          <p>
+            Once movies are added to the vault, the trending collection will appear here.
+          </p>
+
+          <a
+            href="/movies"
+            class="btn btn-primary"
+          >
+            BROWSE MOVIES
+          </a>
+
+        </div>
+      )
+    }
+
+  </section>
+
+</Layout>
