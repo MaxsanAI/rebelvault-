@@ -1,6 +1,14 @@
 ---
 import Layout from '../layouts/Layout.astro';
-import { movies } from '../data/movies';
+import { getMovies } from '../lib/movies';
+
+const runtimeEnv = Astro.locals.runtime?.env;
+
+if (!runtimeEnv?.DB) {
+  throw new Error('D1 database binding DB is not configured.');
+}
+
+const movies = await getMovies(runtimeEnv.DB);
 
 const genres = [
   {
@@ -47,7 +55,8 @@ const genres = [
 
 const movieCountByGenre = (genre: string) =>
   movies.filter(
-    (movie) => movie.genre.toLowerCase() === genre.toLowerCase()
+    (movie) =>
+      movie.genre.toLowerCase() === genre.toLowerCase()
   ).length;
 ---
 
@@ -122,7 +131,8 @@ const movieCountByGenre = (genre: string) =>
                   text-transform:uppercase;
                 "
               >
-                {count} {count === 1 ? 'movie' : 'movies'} →
+                {count}
+                {count === 1 ? ' movie' : ' movies'} →
               </span>
 
             </a>
