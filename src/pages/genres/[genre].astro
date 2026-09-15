@@ -1,63 +1,25 @@
 ---
 import Layout from '../../layouts/Layout.astro';
-import { movies } from '../../data/movies';
+import { getMoviesByGenre } from '../../lib/movies';
 
-const availableGenres = [
-  'Action',
-  'Horror',
-  'Sci-Fi',
-  'Thriller',
-  'Comedy',
-  'Drama',
-  'Crime',
-  'Adventure',
-];
+const runtimeEnv = Astro.locals.runtime?.env;
 
-export function getStaticPaths() {
-  return availableGenres.map((genre) => ({
-    params: {
-      genre: genre.toLowerCase(),
-    },
-    props: {
-      genre,
-    },
-  }));
+if (!runtimeEnv?.DB) {
+  throw new Error('D1 database binding DB is not configured.');
 }
 
-const { genre } = Astro.props;
+const genre = String(Astro.params.genre ?? '').trim();
 
-const genreMovies = movies.filter(
-  (movie) =>
-    movie.genre.toLowerCase() === genre.toLowerCase()
-);
+const decodedGenre = decodeURIComponent(genre);
 
-const genreDescription: Record<string, string> = {
-  Action:
-    'Adrenaline, chaos, impossible missions and movies that never slow down.',
-  Horror:
-    'Nightmares, monsters, darkness and stories designed to get under your skin.',
-  'Sci-Fi':
-    'Future worlds, strange technology, alternate realities and impossible ideas.',
-  Thriller:
-    'Suspense, paranoia, secrets and stories that keep you guessing.',
-  Comedy:
-    'Laughs, chaos, ridiculous situations and characters making questionable decisions.',
-  Drama:
-    'Character-driven stories, difficult choices and movies with something to say.',
-  Crime:
-    'Heists, criminals, detectives and morally grey characters.',
-  Adventure:
-    'Journeys, discoveries, dangerous places and worlds waiting to be explored.',
-};
-
-const description =
-  genreDescription[genre] ??
-  `Explore ${genre} movies inside the REBELVAULT collection.`;
+const movies = decodedGenre
+  ? await getMoviesByGenre(runtimeEnv.DB, decodedGenre)
+  : [];
 ---
 
 <Layout
-  title={`${genre} Movies — REBELVAULT`}
-  description={description}
+  title={`${decodedGenre || 'Genre'} Movies — REBELVAULT`}
+  description={`Explore ${decodedGenre || 'genre'} movies inside REBELVAULT.`}
 >
 
   <section class="section page-section">
@@ -68,48 +30,36 @@ const description =
 
         <a
           href="/genres"
-          class="back-link"
+          class="section-link"
         >
-          ← ALL GENRES
+          ← All genres
         </a>
 
         <div
           class="eyebrow"
           style="margin-top:24px;"
         >
-          GENRE
+          REBELVAULT GENRE
         </div>
 
         <h1 class="section-title">
-          {genre}
+          {decodedGenre}
         </h1>
-
-        <p
-          style="
-            max-width:650px;
-            margin:18px 0 0;
-            color:#969aa3;
-            line-height:1.7;
-          "
-        >
-          {description}
-        </p>
 
       </div>
 
       <span class="movie-count">
-        {genreMovies.length}
-        {genreMovies.length === 1 ? ' movie' : ' movies'}
+        {movies.length}
+        {movies.length === 1 ? ' movie' : ' movies'}
       </span>
 
     </div>
 
-
     {
-      genreMovies.length > 0 ? (
+      movies.length > 0 ? (
         <div class="movie-grid">
 
-          {genreMovies.map((movie) => (
+          {movies.map((movie, index) => (
             <a
               href={`/movie/${movie.id}`}
               class="movie-card"
@@ -120,12 +70,32 @@ const description =
                 <img
                   src={movie.poster}
                   alt={movie.title}
-                  loading="lazy"
+                  loading={index < 4 ? 'eager' : 'lazy'}
                 />
 
                 <span class="poster-play">
                   ▶
                 </span>
+
+                {movie.featured && (
+                  <span
+                    style="
+                      position:absolute;
+                      top:12px;
+                      left:12px;
+                      z-index:3;
+                      padding:7px 10px;
+                      border-radius:5px;
+                      background:rgba(255,73,56,.92);
+                      color:#fff;
+                      font-size:10px;
+                      font-weight:800;
+                      letter-spacing:1px;
+                    "
+                  >
+                    FEATURED
+                  </span>
+                )}
 
               </div>
 
@@ -149,35 +119,36 @@ const description =
           </div>
 
           <h2>
-            Nothing here yet.
+            No movies here yet.
           </h2>
 
           <p>
-            There are no {genre.toLowerCase()} movies in the vault yet.
+            There are currently no movies in the
+            {decodedGenre} genre.
           </p>
 
           <div
             style="
               display:flex;
-              gap:12px;
               justify-content:center;
+              gap:12px;
               flex-wrap:wrap;
               margin-top:26px;
             "
           >
 
             <a
-              href="/movies"
+              href="/genres"
               class="btn btn-primary"
             >
-              BROWSE ALL MOVIES
+              ALL GENRES
             </a>
 
             <a
-              href="/genres"
-              class="btn btn-accent"
+              href="/movies"
+              class="btn btn-secondary"
             >
-              ALL GENRES
+              ALL MOVIES
             </a>
 
           </div>
