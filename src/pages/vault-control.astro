@@ -1,0 +1,836 @@
+---
+import Layout from '../layouts/Layout.astro';
+---
+
+<Layout
+  title="Vault Control — REBELVAULT"
+  description="REBELVAULT content management."
+>
+
+  <section class="vault-control">
+
+    <div class="vault-control-header">
+
+      <div>
+        <div class="eyebrow">
+          PRIVATE CONTROL
+        </div>
+
+        <h1>
+          Vault Control
+        </h1>
+
+        <p>
+          Add and manage movies inside REBELVAULT.
+        </p>
+      </div>
+
+      <a
+        href="/"
+        class="vault-exit"
+      >
+        EXIT VAULT →
+      </a>
+
+    </div>
+
+
+    <div class="vault-grid">
+
+      <!-- ADD MOVIE -->
+
+      <section class="vault-panel">
+
+        <div class="vault-panel-header">
+
+          <div>
+            <span class="vault-panel-number">
+              01
+            </span>
+
+            <h2>
+              Add Movie
+            </h2>
+          </div>
+
+          <span class="vault-status">
+            READY
+          </span>
+
+        </div>
+
+
+        <form
+          id="movie-form"
+          class="vault-form"
+        >
+
+          <div class="form-group">
+
+            <label for="title">
+              Movie Title
+            </label>
+
+            <input
+              id="title"
+              name="title"
+              type="text"
+              placeholder="Enter movie title"
+              required
+            />
+
+          </div>
+
+
+          <div class="form-row">
+
+            <div class="form-group">
+
+              <label for="year">
+                Year
+              </label>
+
+              <input
+                id="year"
+                name="year"
+                type="number"
+                min="1888"
+                max="2100"
+                placeholder="2026"
+                required
+              />
+
+            </div>
+
+
+            <div class="form-group">
+
+              <label for="genre">
+                Genre
+              </label>
+
+              <select
+                id="genre"
+                name="genre"
+                required
+              >
+
+                <option value="">
+                  Select genre
+                </option>
+
+                <option value="Action">
+                  Action
+                </option>
+
+                <option value="Horror">
+                  Horror
+                </option>
+
+                <option value="Sci-Fi">
+                  Sci-Fi
+                </option>
+
+                <option value="Thriller">
+                  Thriller
+                </option>
+
+                <option value="Comedy">
+                  Comedy
+                </option>
+
+                <option value="Drama">
+                  Drama
+                </option>
+
+                <option value="Crime">
+                  Crime
+                </option>
+
+                <option value="Adventure">
+                  Adventure
+                </option>
+
+              </select>
+
+            </div>
+
+          </div>
+
+
+          <div class="form-group">
+
+            <label for="poster">
+              Poster URL
+            </label>
+
+            <input
+              id="poster"
+              name="poster"
+              type="url"
+              placeholder="https://..."
+              required
+            />
+
+            <small>
+              Direct image URL for the movie poster.
+            </small>
+
+          </div>
+
+
+          <div class="form-group">
+
+            <label for="backdrop">
+              Backdrop URL
+            </label>
+
+            <input
+              id="backdrop"
+              name="backdrop"
+              type="url"
+              placeholder="https://..."
+              required
+            />
+
+            <small>
+              Wide cinematic image used for the hero section.
+            </small>
+
+          </div>
+
+
+          <div class="form-group">
+
+            <label for="embed">
+              YouTube Embed URL
+            </label>
+
+            <input
+              id="embed"
+              name="embed"
+              type="url"
+              placeholder="https://www.youtube-nocookie.com/embed/..."
+              required
+            />
+
+            <small>
+              Use the YouTube embed URL, preferably the privacy-enhanced domain.
+            </small>
+
+          </div>
+
+
+          <div class="form-group">
+
+            <label for="description">
+              Description
+            </label>
+
+            <textarea
+              id="description"
+              name="description"
+              rows="6"
+              placeholder="Write a short cinematic description..."
+              required
+            ></textarea>
+
+          </div>
+
+
+          <label class="featured-toggle">
+
+            <input
+              type="checkbox"
+              name="featured"
+              id="featured"
+            />
+
+            <span class="featured-switch"></span>
+
+            <span>
+              <strong>Featured Movie</strong>
+              <small>
+                Show this movie as the main featured title.
+              </small>
+            </span>
+
+          </label>
+
+
+          <button
+            type="submit"
+            class="vault-submit"
+          >
+            ADD MOVIE TO VAULT
+          </button>
+
+          <div
+            id="form-message"
+            class="form-message"
+            aria-live="polite"
+          ></div>
+
+        </form>
+
+      </section>
+
+
+      <!-- VAULT INFO -->
+
+      <aside class="vault-panel vault-info-panel">
+
+        <div class="vault-panel-header">
+
+          <div>
+            <span class="vault-panel-number">
+              02
+            </span>
+
+            <h2>
+              Vault Status
+            </h2>
+          </div>
+
+          <span class="vault-status">
+            PRIVATE
+          </span>
+
+        </div>
+
+
+        <div class="vault-info-list">
+
+          <div class="vault-info-item">
+
+            <span>
+              STORAGE
+            </span>
+
+            <strong>
+              D1 DATABASE
+            </strong>
+
+          </div>
+
+
+          <div class="vault-info-item">
+
+            <span>
+              VIDEO
+            </span>
+
+            <strong>
+              YOUTUBE EMBED
+            </strong>
+
+          </div>
+
+
+          <div class="vault-info-item">
+
+            <span>
+              ADS
+            </span>
+
+            <strong>
+              MONETAG
+            </strong>
+
+          </div>
+
+
+          <div class="vault-info-item">
+
+            <span>
+              PUBLIC ROUTE
+            </span>
+
+            <strong>
+              /movie/[id]
+            </strong>
+
+          </div>
+
+        </div>
+
+
+        <div class="vault-warning">
+
+          <span class="vault-warning-icon">
+            !
+          </span>
+
+          <div>
+
+            <strong>
+              Private area
+            </strong>
+
+            <p>
+              This page will be protected by server-side authentication before production.
+            </p>
+
+          </div>
+
+        </div>
+
+
+        <div class="vault-preview">
+
+          <div class="vault-preview-label">
+            WORKFLOW
+          </div>
+
+          <div class="workflow-step">
+            <span>01</span>
+            Add movie
+          </div>
+
+          <div class="workflow-line"></div>
+
+          <div class="workflow-step">
+            <span>02</span>
+            Save to D1
+          </div>
+
+          <div class="workflow-line"></div>
+
+          <div class="workflow-step">
+            <span>03</span>
+            Publish
+          </div>
+
+          <div class="workflow-line"></div>
+
+          <div class="workflow-step">
+            <span>04</span>
+            Appears in vault
+          </div>
+
+        </div>
+
+      </aside>
+
+    </div>
+
+  </section>
+
+
+  <script>
+    const form = document.querySelector<HTMLFormElement>('#movie-form');
+    const message = document.querySelector<HTMLDivElement>('#form-message');
+
+    form?.addEventListener('submit', (event) => {
+      event.preventDefault();
+
+      if (!message) return;
+
+      message.textContent =
+        'Movie form is ready. Database connection will be added next.';
+
+      message.className = 'form-message success';
+    });
+  </script>
+
+
+  <style>
+
+    .vault-control {
+      width: min(1400px, calc(100% - 40px));
+      margin: 0 auto;
+      padding: 90px 0 120px;
+    }
+
+    .vault-control-header {
+      display: flex;
+      align-items: flex-end;
+      justify-content: space-between;
+      gap: 30px;
+      margin-bottom: 50px;
+    }
+
+    .vault-control-header h1 {
+      margin: 8px 0 0;
+      font-size: clamp(48px, 7vw, 92px);
+      line-height: .9;
+      letter-spacing: -5px;
+    }
+
+    .vault-control-header p {
+      margin: 20px 0 0;
+      color: #858a94;
+      font-size: 16px;
+    }
+
+    .vault-exit {
+      color: #ff4938;
+      font-size: 11px;
+      font-weight: 800;
+      letter-spacing: 1.5px;
+      white-space: nowrap;
+    }
+
+    .vault-grid {
+      display: grid;
+      grid-template-columns: minmax(0, 1.7fr) minmax(320px, .8fr);
+      gap: 24px;
+    }
+
+    .vault-panel {
+      border: 1px solid rgba(255,255,255,.08);
+      border-radius: 16px;
+      background:
+        radial-gradient(
+          circle at 90% 0%,
+          rgba(255,73,56,.07),
+          transparent 32%
+        ),
+        #0d0f13;
+      padding: 32px;
+    }
+
+    .vault-panel-header {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 20px;
+      padding-bottom: 26px;
+      margin-bottom: 28px;
+      border-bottom: 1px solid rgba(255,255,255,.07);
+    }
+
+    .vault-panel-number {
+      display: block;
+      margin-bottom: 8px;
+      color: #ff4938;
+      font-size: 10px;
+      font-weight: 900;
+      letter-spacing: 2px;
+    }
+
+    .vault-panel h2 {
+      margin: 0;
+      font-size: 26px;
+      letter-spacing: -1px;
+    }
+
+    .vault-status {
+      padding: 7px 10px;
+      border: 1px solid rgba(255,255,255,.08);
+      border-radius: 5px;
+      color: #9ca1aa;
+      font-size: 9px;
+      font-weight: 800;
+      letter-spacing: 1.5px;
+    }
+
+    .vault-form {
+      display: flex;
+      flex-direction: column;
+      gap: 22px;
+    }
+
+    .form-group {
+      display: flex;
+      flex-direction: column;
+      gap: 9px;
+    }
+
+    .form-group label {
+      color: #dfe1e5;
+      font-size: 11px;
+      font-weight: 800;
+      letter-spacing: 1.1px;
+      text-transform: uppercase;
+    }
+
+    .form-group input,
+    .form-group select,
+    .form-group textarea {
+      width: 100%;
+      box-sizing: border-box;
+      border: 1px solid rgba(255,255,255,.09);
+      border-radius: 8px;
+      outline: none;
+      background: #08090c;
+      color: #fff;
+      padding: 14px 15px;
+      font: inherit;
+      font-size: 14px;
+      transition:
+        border-color .2s ease,
+        box-shadow .2s ease;
+    }
+
+    .form-group textarea {
+      resize: vertical;
+      min-height: 140px;
+      line-height: 1.6;
+    }
+
+    .form-group input:focus,
+    .form-group select:focus,
+    .form-group textarea:focus {
+      border-color: rgba(255,73,56,.65);
+      box-shadow: 0 0 0 3px rgba(255,73,56,.08);
+    }
+
+    .form-group small {
+      color: #666c76;
+      font-size: 11px;
+      line-height: 1.5;
+    }
+
+    .form-row {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 18px;
+    }
+
+    .featured-toggle {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      padding: 17px;
+      border: 1px solid rgba(255,255,255,.08);
+      border-radius: 9px;
+      cursor: pointer;
+      background: rgba(255,255,255,.015);
+    }
+
+    .featured-toggle input {
+      position: absolute;
+      opacity: 0;
+      pointer-events: none;
+    }
+
+    .featured-switch {
+      position: relative;
+      flex: 0 0 auto;
+      width: 40px;
+      height: 22px;
+      border-radius: 20px;
+      background: #24272d;
+      transition: background .2s ease;
+    }
+
+    .featured-switch::after {
+      content: '';
+      position: absolute;
+      top: 3px;
+      left: 3px;
+      width: 16px;
+      height: 16px;
+      border-radius: 50%;
+      background: #777c85;
+      transition: transform .2s ease;
+    }
+
+    .featured-toggle input:checked + .featured-switch {
+      background: #ff4938;
+    }
+
+    .featured-toggle input:checked + .featured-switch::after {
+      transform: translateX(18px);
+      background: #fff;
+    }
+
+    .featured-toggle strong,
+    .featured-toggle small {
+      display: block;
+    }
+
+    .featured-toggle strong {
+      color: #e7e8eb;
+      font-size: 13px;
+    }
+
+    .featured-toggle small {
+      margin-top: 4px;
+      color: #6f747d;
+      font-size: 11px;
+    }
+
+    .vault-submit {
+      border: 0;
+      border-radius: 8px;
+      padding: 16px 20px;
+      background: #ff4938;
+      color: #fff;
+      cursor: pointer;
+      font: inherit;
+      font-size: 11px;
+      font-weight: 900;
+      letter-spacing: 1.4px;
+      transition:
+        transform .2s ease,
+        background .2s ease;
+    }
+
+    .vault-submit:hover {
+      transform: translateY(-2px);
+      background: #ff5a4b;
+    }
+
+    .form-message {
+      display: none;
+      padding: 13px 15px;
+      border-radius: 7px;
+      font-size: 12px;
+    }
+
+    .form-message.success {
+      display: block;
+      border: 1px solid rgba(70,200,130,.2);
+      background: rgba(70,200,130,.06);
+      color: #7dd9a5;
+    }
+
+    .vault-info-list {
+      display: flex;
+      flex-direction: column;
+    }
+
+    .vault-info-item {
+      display: flex;
+      justify-content: space-between;
+      gap: 20px;
+      padding: 17px 0;
+      border-bottom: 1px solid rgba(255,255,255,.06);
+    }
+
+    .vault-info-item span {
+      color: #626771;
+      font-size: 10px;
+      font-weight: 800;
+      letter-spacing: 1.2px;
+    }
+
+    .vault-info-item strong {
+      color: #d7d9dd;
+      font-size: 11px;
+      letter-spacing: .7px;
+      text-align: right;
+    }
+
+    .vault-warning {
+      display: flex;
+      gap: 13px;
+      margin-top: 30px;
+      padding: 17px;
+      border: 1px solid rgba(255,73,56,.14);
+      border-radius: 9px;
+      background: rgba(255,73,56,.035);
+    }
+
+    .vault-warning-icon {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex: 0 0 auto;
+      width: 23px;
+      height: 23px;
+      border-radius: 50%;
+      background: rgba(255,73,56,.14);
+      color: #ff4938;
+      font-size: 12px;
+      font-weight: 900;
+    }
+
+    .vault-warning strong {
+      display: block;
+      color: #dddfe3;
+      font-size: 12px;
+    }
+
+    .vault-warning p {
+      margin: 6px 0 0;
+      color: #70757e;
+      font-size: 11px;
+      line-height: 1.6;
+    }
+
+    .vault-preview {
+      margin-top: 34px;
+      padding-top: 26px;
+      border-top: 1px solid rgba(255,255,255,.07);
+    }
+
+    .vault-preview-label {
+      margin-bottom: 18px;
+      color: #5f646d;
+      font-size: 9px;
+      font-weight: 900;
+      letter-spacing: 1.7px;
+    }
+
+    .workflow-step {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      color: #aeb2b9;
+      font-size: 12px;
+    }
+
+    .workflow-step span {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      width: 27px;
+      height: 27px;
+      border: 1px solid rgba(255,255,255,.09);
+      border-radius: 50%;
+      color: #ff4938;
+      font-size: 9px;
+      font-weight: 900;
+    }
+
+    .workflow-line {
+      width: 1px;
+      height: 17px;
+      margin: 4px 0 4px 13px;
+      background: rgba(255,255,255,.08);
+    }
+
+    @media (max-width: 900px) {
+
+      .vault-grid {
+        grid-template-columns: 1fr;
+      }
+
+    }
+
+    @media (max-width: 600px) {
+
+      .vault-control {
+        width: min(100% - 24px, 1400px);
+        padding: 60px 0 80px;
+      }
+
+      .vault-control-header {
+        align-items: flex-start;
+        flex-direction: column;
+      }
+
+      .vault-control-header h1 {
+        letter-spacing: -3px;
+      }
+
+      .vault-panel {
+        padding: 22px;
+      }
+
+      .form-row {
+        grid-template-columns: 1fr;
+      }
+
+      .vault-panel-header {
+        align-items: flex-start;
+      }
+
+    }
+
+  </style>
+
+</Layout>
