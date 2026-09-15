@@ -1,0 +1,359 @@
+---
+import Layout from '../../layouts/Layout.astro';
+---
+
+<Layout
+  title="Vault Access — REBELVAULT"
+  description="Private REBELVAULT administration."
+>
+
+  <section class="login-page">
+
+    <div class="login-card">
+
+      <div class="login-mark">
+        RV
+      </div>
+
+      <div class="eyebrow">
+        PRIVATE ACCESS
+      </div>
+
+      <h1>
+        Enter the Vault.
+      </h1>
+
+      <p class="login-subtitle">
+        This area is restricted to REBELVAULT administrators.
+      </p>
+
+      <form id="login-form">
+
+        <label for="password">
+          Admin password
+        </label>
+
+        <div class="password-wrap">
+
+          <input
+            id="password"
+            name="password"
+            type="password"
+            autocomplete="current-password"
+            placeholder="Enter password"
+            required
+          />
+
+          <button
+            type="button"
+            id="toggle-password"
+            aria-label="Show password"
+          >
+            SHOW
+          </button>
+
+        </div>
+
+        <button
+          type="submit"
+          class="login-button"
+          id="login-button"
+        >
+          ENTER VAULT
+        </button>
+
+        <div
+          id="login-status"
+          class="login-status"
+          aria-live="polite"
+        ></div>
+
+      </form>
+
+      <a href="/" class="back-link">
+        ← Back to REBELVAULT
+      </a>
+
+    </div>
+
+  </section>
+
+  <style>
+    .login-page {
+      min-height: calc(100vh - 160px);
+      display: grid;
+      place-items: center;
+      padding: 80px 24px;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .login-page::before {
+      content: '';
+      position: absolute;
+      width: 520px;
+      height: 520px;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      background: radial-gradient(
+        circle,
+        rgba(255, 73, 56, 0.11) 0%,
+        rgba(255, 73, 56, 0.035) 38%,
+        transparent 70%
+      );
+      pointer-events: none;
+    }
+
+    .login-card {
+      width: min(100%, 460px);
+      position: relative;
+      z-index: 2;
+      padding: 46px;
+      border: 1px solid rgba(255, 255, 255, 0.09);
+      border-radius: 14px;
+      background:
+        linear-gradient(
+          145deg,
+          rgba(255, 255, 255, 0.055),
+          rgba(255, 255, 255, 0.018)
+        );
+      box-shadow:
+        0 30px 80px rgba(0, 0, 0, 0.45),
+        inset 0 1px 0 rgba(255, 255, 255, 0.035);
+      backdrop-filter: blur(18px);
+    }
+
+    .login-mark {
+      width: 54px;
+      height: 54px;
+      display: grid;
+      place-items: center;
+      margin-bottom: 28px;
+      border-radius: 9px;
+      background: #ff4938;
+      color: #fff;
+      font-size: 16px;
+      font-weight: 900;
+      letter-spacing: -0.5px;
+      box-shadow: 0 12px 30px rgba(255, 73, 56, 0.2);
+    }
+
+    .login-card h1 {
+      margin: 8px 0 12px;
+      color: #fff;
+      font-size: clamp(34px, 6vw, 48px);
+      line-height: 1;
+      letter-spacing: -1.8px;
+    }
+
+    .login-subtitle {
+      margin: 0 0 34px;
+      color: #8f949d;
+      font-size: 14px;
+      line-height: 1.7;
+    }
+
+    .login-card label {
+      display: block;
+      margin-bottom: 9px;
+      color: #c7cbd2;
+      font-size: 11px;
+      font-weight: 800;
+      letter-spacing: 1.4px;
+      text-transform: uppercase;
+    }
+
+    .password-wrap {
+      position: relative;
+      display: flex;
+      align-items: center;
+    }
+
+    .password-wrap input {
+      width: 100%;
+      height: 54px;
+      padding: 0 78px 0 16px;
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      border-radius: 7px;
+      outline: none;
+      background: rgba(0, 0, 0, 0.28);
+      color: #fff;
+      font: inherit;
+      font-size: 15px;
+      transition:
+        border-color 0.2s ease,
+        box-shadow 0.2s ease;
+    }
+
+    .password-wrap input::placeholder {
+      color: #626771;
+    }
+
+    .password-wrap input:focus {
+      border-color: rgba(255, 73, 56, 0.7);
+      box-shadow: 0 0 0 3px rgba(255, 73, 56, 0.08);
+    }
+
+    #toggle-password {
+      position: absolute;
+      right: 12px;
+      border: 0;
+      background: transparent;
+      color: #777d87;
+      cursor: pointer;
+      font-size: 9px;
+      font-weight: 900;
+      letter-spacing: 1px;
+      padding: 8px;
+    }
+
+    #toggle-password:hover {
+      color: #fff;
+    }
+
+    .login-button {
+      width: 100%;
+      height: 54px;
+      margin-top: 16px;
+      border: 0;
+      border-radius: 7px;
+      background: #ff4938;
+      color: #fff;
+      cursor: pointer;
+      font-size: 11px;
+      font-weight: 900;
+      letter-spacing: 1.5px;
+      transition:
+        transform 0.2s ease,
+        background 0.2s ease,
+        box-shadow 0.2s ease;
+    }
+
+    .login-button:hover {
+      background: #ff5a4a;
+      transform: translateY(-1px);
+      box-shadow: 0 12px 30px rgba(255, 73, 56, 0.2);
+    }
+
+    .login-button:disabled {
+      opacity: 0.6;
+      cursor: wait;
+      transform: none;
+    }
+
+    .login-status {
+      min-height: 22px;
+      margin-top: 14px;
+      color: #ff7467;
+      font-size: 12px;
+      line-height: 1.5;
+      text-align: center;
+    }
+
+    .back-link {
+      display: block;
+      margin-top: 30px;
+      color: #737983;
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: 0.7px;
+      text-align: center;
+      text-decoration: none;
+      transition: color 0.2s ease;
+    }
+
+    .back-link:hover {
+      color: #fff;
+    }
+
+    @media (max-width: 560px) {
+      .login-page {
+        min-height: calc(100vh - 130px);
+        padding: 50px 18px;
+      }
+
+      .login-card {
+        padding: 32px 24px;
+      }
+
+      .login-card h1 {
+        font-size: 38px;
+      }
+    }
+  </style>
+
+  <script>
+    const form = document.querySelector<HTMLFormElement>('#login-form');
+    const passwordInput =
+      document.querySelector<HTMLInputElement>('#password');
+    const togglePassword =
+      document.querySelector<HTMLButtonElement>('#toggle-password');
+    const loginButton =
+      document.querySelector<HTMLButtonElement>('#login-button');
+    const status =
+      document.querySelector<HTMLDivElement>('#login-status');
+
+    togglePassword?.addEventListener('click', () => {
+      if (!passwordInput) return;
+
+      const isPassword = passwordInput.type === 'password';
+
+      passwordInput.type = isPassword ? 'text' : 'password';
+
+      togglePassword.textContent = isPassword
+        ? 'HIDE'
+        : 'SHOW';
+    });
+
+    form?.addEventListener('submit', async (event) => {
+      event.preventDefault();
+
+      if (!passwordInput || !loginButton || !status) return;
+
+      const password = passwordInput.value.trim();
+
+      if (!password) {
+        status.textContent = 'Enter your admin password.';
+        return;
+      }
+
+      loginButton.disabled = true;
+      loginButton.textContent = 'AUTHENTICATING...';
+      status.textContent = '';
+
+      try {
+        const response = await fetch('/api/admin/login', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          credentials: 'same-origin',
+          body: JSON.stringify({
+            password,
+          }),
+        });
+
+        const data = await response.json();
+
+        if (!response.ok || !data.success) {
+          status.textContent =
+            data.error || 'Authentication failed.';
+          loginButton.disabled = false;
+          loginButton.textContent = 'ENTER VAULT';
+          return;
+        }
+
+        loginButton.textContent = 'ACCESS GRANTED';
+
+        window.location.href = '/vault-control';
+      } catch {
+        status.textContent =
+          'Unable to connect to the authentication service.';
+        loginButton.disabled = false;
+        loginButton.textContent = 'ENTER VAULT';
+      }
+    });
+  </script>
+
+</Layout>
