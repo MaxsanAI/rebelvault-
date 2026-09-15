@@ -1,271 +1,480 @@
 ---
 import Layout from '../../layouts/Layout.astro';
-import { movies } from '../../data/movies';
+import {
+  getMovieById,
+  getMovies,
+} from '../../lib/movies';
 
-const monetagLink = 'https://omg10.com/4/9027972';
+const runtimeEnv = Astro.locals.runtime?.env;
 
-export function getStaticPaths() {
-  return movies.map((movie) => ({
-    params: {
-      id: movie.id,
-    },
-    props: {
-      movie,
-    },
-  }));
+if (!runtimeEnv?.DB) {
+  throw new Error('D1 database binding DB is not configured.');
 }
 
-const { movie } = Astro.props;
+const db = runtimeEnv.DB;
 
-const relatedMovies = movies
-  .filter((item) => item.id !== movie.id)
-  .filter(
-    (item) =>
-      item.genre.toLowerCase() === movie.genre.toLowerCase()
-  )
-  .slice(0, 4);
+const movieId = String(Astro.params.id ?? '');
 
-const fallbackMovies =
-  relatedMovies.length > 0
-    ? relatedMovies
-    : movies.filter((item) => item.id !== movie.id).slice(0, 4);
+const [movie, allMovies] = await Promise.all([
+  getMovieById(db, movieId),
+  getMovies(db),
+]);
+
+if (!movie) {
+  Astro.response.status = 404;
+}
+
+const relatedMovies = movie
+  ? allMovies
+      .filter(
+        (item) =>
+          item.id !== movie.id &&
+          item.genre.toLowerCase() === movie.genre.toLowerCase()
+      )
+      .slice(0, 4)
+  : [];
+
+const monetagUrl = 'https://omg10.com/4/9027972';
 ---
 
 <Layout
-  title={`${movie.title} — REBELVAULT`}
-  description={movie.description}
+  title={
+    movie
+      ? `${movie.title} — REBELVAULT`
+      : 'Movie Not Found — REBELVAULT'
+  }
+  description={
+    movie
+      ? movie.description
+      : 'The requested movie could not be found.'
+  }
 >
 
-  <section class="watch-page">
-
-    <div class="watch-header">
-
-      <a
-        href="/movies"
-        class="back-link"
-      >
-        ← BACK TO MOVIES
-      </a>
-
-      <div class="eyebrow">
-        NOW PLAYING
-      </div>
-
-      <h1>
-        {movie.title}
-      </h1>
-
-      <div class="hero-meta">
-        <span>{movie.year}</span>
-        <span class="dot">•</span>
-        <span>{movie.genre}</span>
-      </div>
-
-    </div>
-
-
-    <!-- MONETAG WATCH GATE -->
-
-    <section class="watch-gate">
-
-      <div class="watch-gate-content">
-
-        <span class="watch-gate-label">
-          READY TO WATCH?
-        </span>
-
-        <h2>
-          Enter the movie.
-        </h2>
-
-        <p>
-          Continue through REBELVAULT and start watching.
-        </p>
-
-        <a
-          href={monetagLink}
-          class="btn btn-primary watch-gate-button"
-          target="_blank"
-          rel="noopener noreferrer"
+  {
+    movie ? (
+      <>
+        <section
+          class="watch-page"
+          style={`background-image:url("${movie.backdrop}")`}
         >
-          ▶ WATCH MOVIE
-        </a>
 
-        <span class="watch-gate-note">
-          Opens in a new tab
-        </span>
+          <div class="watch-backdrop"></div>
 
-      </div>
+          <div class="watch-inner">
 
-    </section>
+            <a
+              href="/movies"
+              class="back-link"
+            >
+              ← BACK TO MOVIES
+            </a>
 
+            <div class="watch-layout">
 
-    <!-- VIDEO -->
+              <div class="watch-poster">
 
-    <div class="player-container">
+                <img
+                  src={movie.poster}
+                  alt={movie.title}
+                />
 
-      <div class="player-frame">
+              </div>
 
-        <iframe
-          src={movie.embed}
-          title={movie.title}
-          loading="lazy"
-          allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
-          allowfullscreen
-          referrerpolicy="strict-origin-when-cross-origin"
-        ></iframe>
+              <div class="watch-details">
 
-      </div>
+                <div class="eyebrow">
+                  REBELVAULT
+                </div>
 
-    </div>
+                <h1>
+                  {movie.title}
+                </h1>
 
+                <div class="watch-meta">
 
-    <!-- MOVIE DETAILS -->
+                  <span>
+                    {movie.year}
+                  </span>
 
-    <div class="watch-details">
+                  <span>•</span>
 
-      <div>
+                  <span>
+                    {movie.genre}
+                  </span>
 
-        <div class="eyebrow">
-          ABOUT THE MOVIE
-        </div>
+                </div>
 
-        <h2>
-          {movie.title}
-        </h2>
+                <p class="watch-description">
+                  {movie.description}
+                </p>
 
-        <p>
-          {movie.description}
-        </p>
+                <div class="watch-cta">
 
-      </div>
+                  <a
+                    href={monetagUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    class="btn btn-primary"
+                  >
+                    ▶ WATCH MOVIE
+                  </a>
 
-      <div class="watch-meta">
+                  <span class="watch-note">
+                    Opens the streaming link in a new tab.
+                  </span>
 
-        <div>
-          <span>YEAR</span>
-          <strong>{movie.year}</strong>
-        </div>
+                </div>
 
-        <div>
-          <span>GENRE</span>
-          <strong>{movie.genre}</strong>
-        </div>
+              </div>
 
-      </div>
+            </div>
 
-    </div>
+          </div>
 
+        </section>
 
-    <!-- SECOND MONETAG CTA -->
-
-    <section class="watch-cta">
-
-      <div>
-
-        <span class="eyebrow">
-          KEEP EXPLORING
-        </span>
-
-        <h2>
-          Looking for something else?
-        </h2>
-
-        <p>
-          Discover another movie from the REBELVAULT collection.
-        </p>
-
-      </div>
-
-      <div class="watch-cta-actions">
-
-        <a
-          href={monetagLink}
-          class="btn btn-primary"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          CONTINUE WATCHING
-        </a>
-
-        <a
-          href="/random"
-          class="btn btn-accent"
-        >
-          🎲 RANDOM MOVIE
-        </a>
-
-      </div>
-
-    </section>
-
-
-    <!-- RELATED -->
-
-    {
-      fallbackMovies.length > 0 && (
-        <section class="section related-section">
+        <section class="section">
 
           <div class="section-header">
 
             <div>
               <div class="eyebrow">
-                YOU MAY ALSO LIKE
+                NOW PLAYING
               </div>
 
               <h2 class="section-title">
-                More from the Vault
+                Watch {movie.title}
               </h2>
             </div>
 
+          </div>
+
+          <div class="player-container">
+
+            <iframe
+              src={movie.embed}
+              title={`Watch ${movie.title}`}
+              loading="lazy"
+              allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+              allowfullscreen
+            ></iframe>
+
+          </div>
+
+          <div class="watch-bottom-cta">
+
+            <p>
+              Enjoy the movie?
+            </p>
+
             <a
-              href="/movies"
-              class="section-link"
+              href={monetagUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              class="btn btn-accent"
             >
-              View all →
+              CONTINUE WATCHING →
             </a>
 
           </div>
 
-          <div class="movie-grid">
+        </section>
 
-            {fallbackMovies.map((related) => (
-              <a
-                href={`/movie/${related.id}`}
-                class="movie-card"
-              >
+        {
+          relatedMovies.length > 0 && (
+            <section class="section">
 
-                <div class="poster">
+              <div class="section-header">
 
-                  <img
-                    src={related.poster}
-                    alt={related.title}
-                    loading="lazy"
-                  />
+                <div>
+                  <div class="eyebrow">
+                    MORE FROM THE VAULT
+                  </div>
 
-                  <span class="poster-play">
-                    ▶
-                  </span>
-
+                  <h2 class="section-title">
+                    You Might Also Like
+                  </h2>
                 </div>
 
-                <h3 class="movie-title">
-                  {related.title}
-                </h3>
+                <a
+                  href={`/genres/${encodeURIComponent(movie.genre.toLowerCase())}`}
+                  class="section-link"
+                >
+                  More {movie.genre} →
+                </a>
 
-                <p class="movie-meta">
-                  {related.year} · {related.genre}
-                </p>
+              </div>
 
-              </a>
-            ))}
+              <div class="movie-grid">
 
+                {relatedMovies.map((relatedMovie) => (
+                  <a
+                    href={`/movie/${relatedMovie.id}`}
+                    class="movie-card"
+                  >
+
+                    <div class="poster">
+
+                      <img
+                        src={relatedMovie.poster}
+                        alt={relatedMovie.title}
+                        loading="lazy"
+                      />
+
+                      <span class="poster-play">
+                        ▶
+                      </span>
+
+                    </div>
+
+                    <h3 class="movie-title">
+                      {relatedMovie.title}
+                    </h3>
+
+                    <p class="movie-meta">
+                      {relatedMovie.year} · {relatedMovie.genre}
+                    </p>
+
+                  </a>
+                ))}
+
+              </div>
+
+            </section>
+          )
+        }
+      </>
+    ) : (
+      <section class="section page-section">
+
+        <div class="empty-state">
+
+          <div class="empty-icon">
+            ✕
           </div>
 
-        </section>
-      )
+          <h1>
+            Movie not found.
+          </h1>
+
+          <p>
+            This movie is not currently available in the vault.
+          </p>
+
+          <a
+            href="/movies"
+            class="btn btn-primary"
+          >
+            BROWSE MOVIES
+          </a>
+
+        </div>
+
+      </section>
+    )
+  }
+
+  <style>
+    .watch-page {
+      position: relative;
+      min-height: 620px;
+      display: flex;
+      align-items: flex-end;
+      background-size: cover;
+      background-position: center;
+      overflow: hidden;
     }
 
-  </section>
+    .watch-backdrop {
+      position: absolute;
+      inset: 0;
+      background:
+        linear-gradient(
+          90deg,
+          rgba(8, 9, 12, 0.98) 0%,
+          rgba(8, 9, 12, 0.86) 42%,
+          rgba(8, 9, 12, 0.48) 75%,
+          rgba(8, 9, 12, 0.78) 100%
+        ),
+        linear-gradient(
+          0deg,
+          #08090c 0%,
+          transparent 48%
+        );
+    }
+
+    .watch-inner {
+      position: relative;
+      z-index: 2;
+      width: min(1180px, calc(100% - 48px));
+      margin: 0 auto;
+      padding: 70px 0 90px;
+    }
+
+    .watch-layout {
+      display: grid;
+      grid-template-columns: 260px minmax(0, 650px);
+      gap: 48px;
+      align-items: end;
+      margin-top: 38px;
+    }
+
+    .watch-poster {
+      width: 260px;
+      aspect-ratio: 2 / 3;
+      overflow: hidden;
+      border-radius: 10px;
+      border: 1px solid rgba(255, 255, 255, 0.12);
+      box-shadow: 0 30px 80px rgba(0, 0, 0, 0.55);
+    }
+
+    .watch-poster img {
+      width: 100%;
+      height: 100%;
+      display: block;
+      object-fit: cover;
+    }
+
+    .watch-details h1 {
+      margin: 10px 0 18px;
+      max-width: 850px;
+      color: #fff;
+      font-size: clamp(42px, 6vw, 76px);
+      line-height: 0.95;
+      letter-spacing: -3px;
+    }
+
+    .watch-meta {
+      display: flex;
+      gap: 10px;
+      align-items: center;
+      margin-bottom: 24px;
+      color: #b4bac3;
+      font-size: 13px;
+      font-weight: 700;
+    }
+
+    .watch-description {
+      max-width: 680px;
+      margin: 0;
+      color: #aeb3bc;
+      font-size: 16px;
+      line-height: 1.75;
+    }
+
+    .watch-cta {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      flex-wrap: wrap;
+      margin-top: 30px;
+    }
+
+    .watch-note {
+      color: #737983;
+      font-size: 11px;
+      line-height: 1.5;
+    }
+
+    .back-link {
+      color: #9298a2;
+      font-size: 10px;
+      font-weight: 900;
+      letter-spacing: 1.2px;
+      text-decoration: none;
+      transition: color 0.2s ease;
+    }
+
+    .back-link:hover {
+      color: #fff;
+    }
+
+    .player-container {
+      width: 100%;
+      aspect-ratio: 16 / 9;
+      overflow: hidden;
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      border-radius: 12px;
+      background: #050506;
+      box-shadow: 0 30px 80px rgba(0, 0, 0, 0.4);
+    }
+
+    .player-container iframe {
+      width: 100%;
+      height: 100%;
+      display: block;
+      border: 0;
+    }
+
+    .watch-bottom-cta {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 18px;
+      flex-wrap: wrap;
+      margin-top: 28px;
+      text-align: center;
+    }
+
+    .watch-bottom-cta p {
+      margin: 0;
+      color: #8f949d;
+      font-size: 13px;
+    }
+
+    @media (max-width: 850px) {
+      .watch-page {
+        min-height: auto;
+      }
+
+      .watch-inner {
+        width: min(100% - 36px, 680px);
+        padding: 50px 0 65px;
+      }
+
+      .watch-layout {
+        grid-template-columns: 180px minmax(0, 1fr);
+        gap: 28px;
+      }
+
+      .watch-poster {
+        width: 180px;
+      }
+
+      .watch-details h1 {
+        font-size: clamp(34px, 8vw, 56px);
+        letter-spacing: -2px;
+      }
+    }
+
+    @media (max-width: 620px) {
+      .watch-layout {
+        grid-template-columns: 1fr;
+        gap: 28px;
+      }
+
+      .watch-poster {
+        width: min(220px, 70vw);
+      }
+
+      .watch-details h1 {
+        font-size: 42px;
+      }
+
+      .watch-description {
+        font-size: 14px;
+      }
+
+      .watch-cta {
+        align-items: stretch;
+        flex-direction: column;
+      }
+
+      .watch-cta .btn {
+        width: 100%;
+        text-align: center;
+      }
+    }
+  </style>
 
 </Layout>
