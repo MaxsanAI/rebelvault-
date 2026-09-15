@@ -4,7 +4,7 @@ import Layout from '../layouts/Layout.astro';
 
 <Layout
   title="Vault Control — REBELVAULT"
-  description="REBELVAULT content management."
+  description="Private REBELVAULT content management."
 >
 
   <section class="vault-control">
@@ -54,7 +54,7 @@ import Layout from '../layouts/Layout.astro';
           </div>
 
           <span class="vault-status">
-            READY
+            D1 CONNECTED
           </span>
 
         </div>
@@ -76,6 +76,7 @@ import Layout from '../layouts/Layout.astro';
               name="title"
               type="text"
               placeholder="Enter movie title"
+              autocomplete="off"
               required
             />
 
@@ -194,7 +195,7 @@ import Layout from '../layouts/Layout.astro';
             />
 
             <small>
-              Wide cinematic image used for the hero section.
+              Wide cinematic image used for the movie page and featured hero.
             </small>
 
           </div>
@@ -215,7 +216,7 @@ import Layout from '../layouts/Layout.astro';
             />
 
             <small>
-              Use the YouTube embed URL, preferably the privacy-enhanced domain.
+              Paste the YouTube embed URL, not the normal watch URL.
             </small>
 
           </div>
@@ -250,8 +251,9 @@ import Layout from '../layouts/Layout.astro';
 
             <span>
               <strong>Featured Movie</strong>
+
               <small>
-                Show this movie as the main featured title.
+                Make this the main featured movie on the homepage.
               </small>
             </span>
 
@@ -261,9 +263,11 @@ import Layout from '../layouts/Layout.astro';
           <button
             type="submit"
             class="vault-submit"
+            id="submit-button"
           >
             ADD MOVIE TO VAULT
           </button>
+
 
           <div
             id="form-message"
@@ -276,7 +280,7 @@ import Layout from '../layouts/Layout.astro';
       </section>
 
 
-      <!-- VAULT INFO -->
+      <!-- STATUS -->
 
       <aside class="vault-panel vault-info-panel">
 
@@ -292,8 +296,11 @@ import Layout from '../layouts/Layout.astro';
             </h2>
           </div>
 
-          <span class="vault-status">
-            PRIVATE
+          <span
+            id="connection-status"
+            class="vault-status"
+          >
+            CHECKING
           </span>
 
         </div>
@@ -304,11 +311,24 @@ import Layout from '../layouts/Layout.astro';
           <div class="vault-info-item">
 
             <span>
+              DATABASE
+            </span>
+
+            <strong>
+              CLOUDFLARE D1
+            </strong>
+
+          </div>
+
+
+          <div class="vault-info-item">
+
+            <span>
               STORAGE
             </span>
 
             <strong>
-              D1 DATABASE
+              DATABASE
             </strong>
 
           </div>
@@ -321,7 +341,7 @@ import Layout from '../layouts/Layout.astro';
             </span>
 
             <strong>
-              YOUTUBE EMBED
+              YOUTUBE
             </strong>
 
           </div>
@@ -364,11 +384,11 @@ import Layout from '../layouts/Layout.astro';
           <div>
 
             <strong>
-              Private area
+              Authentication still required
             </strong>
 
             <p>
-              This page will be protected by server-side authentication before production.
+              Before production, this private panel and its API will be protected with server-side authentication.
             </p>
 
           </div>
@@ -379,36 +399,42 @@ import Layout from '../layouts/Layout.astro';
         <div class="vault-preview">
 
           <div class="vault-preview-label">
-            WORKFLOW
+            PUBLISH WORKFLOW
           </div>
 
           <div class="workflow-step">
             <span>01</span>
-            Add movie
+            Fill movie details
           </div>
 
           <div class="workflow-line"></div>
 
           <div class="workflow-step">
             <span>02</span>
-            Save to D1
+            Submit movie
           </div>
 
           <div class="workflow-line"></div>
 
           <div class="workflow-step">
             <span>03</span>
-            Publish
+            Save to D1
           </div>
 
           <div class="workflow-line"></div>
 
           <div class="workflow-step">
             <span>04</span>
-            Appears in vault
+            Movie published
           </div>
 
         </div>
+
+
+        <div
+          id="movie-result"
+          class="movie-result"
+        ></div>
 
       </aside>
 
@@ -420,16 +446,124 @@ import Layout from '../layouts/Layout.astro';
   <script>
     const form = document.querySelector<HTMLFormElement>('#movie-form');
     const message = document.querySelector<HTMLDivElement>('#form-message');
+    const submitButton =
+      document.querySelector<HTMLButtonElement>('#submit-button');
+    const connectionStatus =
+      document.querySelector<HTMLSpanElement>('#connection-status');
+    const movieResult =
+      document.querySelector<HTMLDivElement>('#movie-result');
 
-    form?.addEventListener('submit', (event) => {
+    async function checkConnection() {
+      if (!connectionStatus) return;
+
+      try {
+        const response = await fetch('/api/movies', {
+          method: 'GET',
+          headers: {
+            Accept: 'application/json',
+          },
+        });
+
+        const data = await response.json();
+
+        if (response.ok && data.success) {
+          connectionStatus.textContent = 'ONLINE';
+          connectionStatus.classList.add('online');
+
+          if (movieResult && typeof data.count === 'number') {
+            movieResult.innerHTML = `
+              <span>VAULT CONTENT</span>
+              <strong>${data.count}</strong>
+              <small>${data.count === 1 ? 'movie stored' : 'movies stored'}</small>
+            `;
+          }
+        } else {
+          connectionStatus.textContent = 'ERROR';
+          connectionStatus.classList.add('error');
+        }
+      } catch {
+        connectionStatus.textContent = 'OFFLINE';
+        connectionStatus.classList.add('error');
+      }
+    }
+
+    checkConnection();
+
+
+    form?.addEventListener('submit', async (event) => {
       event.preventDefault();
 
-      if (!message) return;
+      if (!form || !message || !submitButton) return;
 
-      message.textContent =
-        'Movie form is ready. Database connection will be added next.';
+      const formData = new FormData(form);
 
-      message.className = 'form-message success';
+      const payload = {
+        title: String(formData.get('title') ?? '').trim(),
+        year: Number(formData.get('year')),
+        genre: String(formData.get('genre') ?? '').trim(),
+        poster: String(formData.get('poster') ?? '').trim(),
+        backdrop: String(formData.get('backdrop') ?? '').trim(),
+        embed: String(formData.get('embed') ?? '').trim(),
+        description: String(formData.get('description') ?? '').trim(),
+        featured: formData.get('featured') === 'on',
+      };
+
+      submitButton.disabled = true;
+      submitButton.textContent = 'ADDING TO VAULT...';
+
+      message.className = 'form-message';
+      message.textContent = '';
+
+      try {
+        const response = await fetch('/api/admin/movie', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            Accept: 'application/json',
+          },
+          body: JSON.stringify(payload),
+        });
+
+        const data = await response.json();
+
+        if (!response.ok || !data.success) {
+          throw new Error(
+            data?.error || 'Unable to add movie.'
+          );
+        }
+
+        message.className = 'form-message success';
+
+        message.textContent =
+          `“${data.movie.title}” has been added to the vault.`;
+
+        form.reset();
+
+        if (movieResult) {
+          movieResult.innerHTML = `
+            <span>LAST PUBLISHED</span>
+            <strong>${data.movie.title}</strong>
+            <small>/movie/${data.movie.id}</small>
+          `;
+        }
+
+        await checkConnection();
+
+      } catch (error) {
+
+        message.className = 'form-message error';
+
+        message.textContent =
+          error instanceof Error
+            ? error.message
+            : 'Unable to add movie.';
+
+      } finally {
+
+        submitButton.disabled = false;
+        submitButton.textContent = 'ADD MOVIE TO VAULT';
+
+      }
     });
   </script>
 
@@ -525,6 +659,16 @@ import Layout from '../layouts/Layout.astro';
       letter-spacing: 1.5px;
     }
 
+    .vault-status.online {
+      border-color: rgba(75,210,135,.2);
+      color: #71dca0;
+    }
+
+    .vault-status.error {
+      border-color: rgba(255,73,56,.2);
+      color: #ff7668;
+    }
+
     .vault-form {
       display: flex;
       flex-direction: column;
@@ -561,6 +705,10 @@ import Layout from '../layouts/Layout.astro';
       transition:
         border-color .2s ease,
         box-shadow .2s ease;
+    }
+
+    .form-group select {
+      cursor: pointer;
     }
 
     .form-group textarea {
@@ -665,12 +813,18 @@ import Layout from '../layouts/Layout.astro';
       letter-spacing: 1.4px;
       transition:
         transform .2s ease,
-        background .2s ease;
+        background .2s ease,
+        opacity .2s ease;
     }
 
-    .vault-submit:hover {
+    .vault-submit:hover:not(:disabled) {
       transform: translateY(-2px);
       background: #ff5a4b;
+    }
+
+    .vault-submit:disabled {
+      cursor: wait;
+      opacity: .6;
     }
 
     .form-message {
@@ -678,13 +832,24 @@ import Layout from '../layouts/Layout.astro';
       padding: 13px 15px;
       border-radius: 7px;
       font-size: 12px;
+      line-height: 1.5;
+    }
+
+    .form-message.success,
+    .form-message.error {
+      display: block;
     }
 
     .form-message.success {
-      display: block;
       border: 1px solid rgba(70,200,130,.2);
       background: rgba(70,200,130,.06);
       color: #7dd9a5;
+    }
+
+    .form-message.error {
+      border: 1px solid rgba(255,73,56,.2);
+      background: rgba(255,73,56,.06);
+      color: #ff887c;
     }
 
     .vault-info-list {
@@ -791,6 +956,38 @@ import Layout from '../layouts/Layout.astro';
       height: 17px;
       margin: 4px 0 4px 13px;
       background: rgba(255,255,255,.08);
+    }
+
+    .movie-result {
+      display: flex;
+      flex-direction: column;
+      gap: 5px;
+      margin-top: 28px;
+      padding: 18px;
+      border: 1px solid rgba(255,255,255,.07);
+      border-radius: 9px;
+      background: rgba(255,255,255,.015);
+    }
+
+    .movie-result:empty {
+      display: none;
+    }
+
+    .movie-result span {
+      color: #666b74;
+      font-size: 9px;
+      font-weight: 900;
+      letter-spacing: 1.5px;
+    }
+
+    .movie-result strong {
+      color: #e4e5e8;
+      font-size: 15px;
+    }
+
+    .movie-result small {
+      color: #ff4938;
+      font-size: 11px;
     }
 
     @media (max-width: 900px) {
