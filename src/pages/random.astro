@@ -1,0 +1,113 @@
+---
+import Layout from '../layouts/Layout.astro';
+import { movies } from '../data/movies';
+
+const randomMovie =
+  movies.length > 0
+    ? movies[Math.floor(Math.random() * movies.length)]
+    : null;
+---
+
+<Layout
+  title="Random Movie — REBELVAULT"
+  description="Let REBELVAULT choose your next movie."
+>
+
+  <section class="random-page">
+
+    <div class="random-inner">
+
+      <div class="eyebrow">
+        NO PLAN. NO PROBLEM.
+      </div>
+
+      <h1>
+        Your next movie
+        is waiting.
+      </h1>
+
+      {
+        randomMovie ? (
+          <>
+            <div class="random-card">
+
+              <div class="random-poster">
+
+                <img
+                  src={randomMovie.poster}
+                  alt={randomMovie.title}
+                />
+
+              </div>
+
+              <div class="random-info">
+
+                <span class="random-label">
+                  REBELVAULT PICK
+                </span>
+
+                <h2>
+                  {randomMovie.title}
+                </h2>
+
+                <p class="movie-meta">
+                  {randomMovie.year} · {randomMovie.genre}
+                </p>
+
+                <p class="random-description">
+                  {randomMovie.description}
+                </p>
+
+                <div class="random-actions">
+
+                  <a
+                    href={`/movie/${randomMovie.id}`}
+                    class="btn btn-primary"
+                  >
+                    ▶ WATCH MOVIE
+                  </a>
+
+                  <a
+                    href="/random"
+                    class="btn btn-accent"
+                  >
+                    🎲 PICK AGAIN
+                  </a>
+
+                </div>
+
+              </div>
+
+            </div>
+          </>
+        ) : (
+          <div class="empty-state">
+
+            <div class="empty-icon">
+              ✦
+            </div>
+
+            <h2>
+              The vault is waiting.
+            </h2>
+
+            <p>
+              Add your first movie to generate a random recommendation.
+            </p>
+
+            <a
+              href="/movies"
+              class="btn btn-primary"
+            >
+              BROWSE MOVIES
+            </a>
+
+          </div>
+        )
+      }
+
+    </div>
+
+  </section>
+
+</Layout>
