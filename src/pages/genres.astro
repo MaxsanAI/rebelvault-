@@ -1,0 +1,137 @@
+---
+import Layout from '../layouts/Layout.astro';
+import { movies } from '../data/movies';
+
+const genres = [
+  {
+    name: 'Action',
+    number: '01',
+    description: 'Adrenaline, chaos and movies that never slow down.',
+  },
+  {
+    name: 'Horror',
+    number: '02',
+    description: 'Dark stories, nightmares and things you should not watch alone.',
+  },
+  {
+    name: 'Sci-Fi',
+    number: '03',
+    description: 'Future worlds, impossible technology and strange realities.',
+  },
+  {
+    name: 'Thriller',
+    number: '04',
+    description: 'Suspense, paranoia and stories that keep you guessing.',
+  },
+  {
+    name: 'Comedy',
+    number: '05',
+    description: 'Movies built for laughs, chaos and questionable decisions.',
+  },
+  {
+    name: 'Drama',
+    number: '06',
+    description: 'Character-driven stories with something to say.',
+  },
+  {
+    name: 'Crime',
+    number: '07',
+    description: 'Heists, criminals, detectives and morally grey characters.',
+  },
+  {
+    name: 'Adventure',
+    number: '08',
+    description: 'Journeys, discoveries and worlds waiting to be explored.',
+  },
+];
+
+const movieCountByGenre = (genre: string) =>
+  movies.filter(
+    (movie) => movie.genre.toLowerCase() === genre.toLowerCase()
+  ).length;
+---
+
+<Layout
+  title="Genres — REBELVAULT"
+  description="Explore movies by genre inside REBELVAULT."
+>
+
+  <section class="section page-section">
+
+    <div class="section-header">
+
+      <div>
+        <div class="eyebrow">
+          FIND YOUR MOOD
+        </div>
+
+        <h1 class="section-title">
+          Explore Genres
+        </h1>
+      </div>
+
+      <a
+        href="/movies"
+        class="section-link"
+      >
+        All movies →
+      </a>
+
+    </div>
+
+    <div class="genre-grid">
+
+      {
+        genres.map((genre) => {
+          const count = movieCountByGenre(genre.name);
+
+          return (
+            <a
+              href={`/genres/${genre.name.toLowerCase()}`}
+              class="genre-card"
+            >
+
+              <span class="genre-number">
+                {genre.number}
+              </span>
+
+              <h2>
+                {genre.name}
+              </h2>
+
+              <p
+                style="
+                  margin:14px 0 0;
+                  max-width:300px;
+                  color:#8f949d;
+                  font-size:14px;
+                  line-height:1.6;
+                "
+              >
+                {genre.description}
+              </p>
+
+              <span
+                style="
+                  display:inline-block;
+                  margin-top:24px;
+                  color:#ff4938;
+                  font-size:11px;
+                  font-weight:800;
+                  letter-spacing:1.4px;
+                  text-transform:uppercase;
+                "
+              >
+                {count} {count === 1 ? 'movie' : 'movies'} →
+              </span>
+
+            </a>
+          );
+        })
+      }
+
+    </div>
+
+  </section>
+
+</Layout>
