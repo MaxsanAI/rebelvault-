@@ -11,13 +11,19 @@ function isAuthenticated(request: Request): boolean {
   return cookieHeader
     .split(';')
     .map((cookie) => cookie.trim())
-    .some((cookie) => cookie === `${COOKIE_NAME}=${COOKIE_VALUE}`);
+    .some(
+      (cookie) =>
+        cookie === `${COOKIE_NAME}=${COOKIE_VALUE}`
+    );
 }
 
 function unauthorizedResponse(request: Request): Response {
   const url = new URL(request.url);
 
-  if (url.pathname.startsWith('/api/admin/')) {
+  if (
+    url.pathname === '/api/admin' ||
+    url.pathname.startsWith('/api/admin/')
+  ) {
     return Response.json(
       {
         success: false,
@@ -32,12 +38,17 @@ function unauthorizedResponse(request: Request): Response {
     );
   }
 
-  const loginUrl = new URL('/vault-control/login', request.url);
+  const loginUrl = new URL(
+    '/vault-control/login',
+    request.url
+  );
 
   return Response.redirect(loginUrl.toString(), 302);
 }
 
-export const onRequest: PagesFunction<Env> = async (context) => {
+export const onRequest: PagesFunction<Env> = async (
+  context
+) => {
   const url = new URL(context.request.url);
   const pathname = url.pathname;
 
@@ -49,13 +60,35 @@ export const onRequest: PagesFunction<Env> = async (context) => {
     pathname === '/api/admin' ||
     pathname.startsWith('/api/admin/');
 
+  const isLoginApi =
+    pathname === '/api/admin/login';
+
+  /*
+   * Login endpoint must remain publicly accessible.
+   * Otherwise the middleware would block the password
+   * request before login.ts can authenticate it.
+   */
+  if (isLoginApi) {
+    return context.next();
+  }
+
+  /*
+   * Everything unrelated to the private admin area
+   * passes through normally.
+   */
   if (!isAdminPage && !isAdminApi) {
     return context.next();
   }
 
+  /*
+   * Already authenticated.
+   */
   if (isAuthenticated(context.request)) {
     return context.next();
   }
 
+  /*
+   * Admin page/API without a valid authentication cookie.
+   */
   return unauthorizedResponse(context.request);
 };
