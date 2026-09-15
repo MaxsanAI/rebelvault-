@@ -1,86 +1,170 @@
 ---
 import Layout from '../layouts/Layout.astro';
-import { movies } from '../data/movies';
+import { getMovies, getFeaturedMovie } from '../lib/movies';
 
-const featured = movies.find((movie) => movie.featured) ?? movies[0];
+const runtimeEnv = Astro.locals.runtime?.env;
 
-const trending = movies.slice(0, 6);
-const latest = [...movies].reverse().slice(0, 6);
+if (!runtimeEnv?.DB) {
+  throw new Error('D1 database binding DB is not configured.');
+}
+
+const db = runtimeEnv.DB;
+
+const [movies, featuredMovie] = await Promise.all([
+  getMovies(db),
+  getFeaturedMovie(db),
+]);
+
+const trendingMovies = movies.slice(0, 8);
+
+const latestMovies = movies.slice(0, 8);
 
 const genres = [
-  { name: 'Action', number: '01' },
-  { name: 'Horror', number: '02' },
-  { name: 'Sci-Fi', number: '03' },
-  { name: 'Thriller', number: '04' },
-  { name: 'Comedy', number: '05' },
-  { name: 'Drama', number: '06' },
-  { name: 'Crime', number: '07' },
-  { name: 'Adventure', number: '08' },
+  {
+    name: 'Action',
+    number: '01',
+    description: 'Adrenaline, chaos and movies that never slow down.',
+  },
+  {
+    name: 'Horror',
+    number: '02',
+    description: 'Dark stories, nightmares and things you should not watch alone.',
+  },
+  {
+    name: 'Sci-Fi',
+    number: '03',
+    description: 'Future worlds, impossible technology and strange realities.',
+  },
+  {
+    name: 'Thriller',
+    number: '04',
+    description: 'Suspense, paranoia and stories that keep you guessing.',
+  },
+  {
+    name: 'Comedy',
+    number: '05',
+    description: 'Movies built for laughs, chaos and questionable decisions.',
+  },
+  {
+    name: 'Drama',
+    number: '06',
+    description: 'Character-driven stories with something to say.',
+  },
+  {
+    name: 'Crime',
+    number: '07',
+    description: 'Heists, criminals, detectives and morally grey characters.',
+  },
+  {
+    name: 'Adventure',
+    number: '08',
+    description: 'Journeys, discoveries and worlds waiting to be explored.',
+  },
 ];
 ---
 
 <Layout
-  title="REBELVAULT — Rebel Cinema"
-  description="Discover movies worth watching. Rebel cinema without the noise."
+  title="REBELVAULT — Movies Outside the Mainstream"
+  description="Discover movies worth watching. Explore the REBELVAULT underground cinema."
 >
 
-  <!-- HERO -->
+  {
+    featuredMovie ? (
+      <section
+        class="hero"
+        style={`background-image: url("${featuredMovie.backdrop}")`}
+      >
 
-  <section
-    class="hero"
-    style={`background-image: url("${featured.backdrop}")`}
-  >
-    <div class="hero-content">
+        <div class="hero-overlay"></div>
 
-      <div class="eyebrow">
-        FEATURED TONIGHT
-      </div>
+        <div class="hero-content">
 
-      <h1>
-        {featured.title}
-      </h1>
+          <div class="eyebrow">
+            FEATURED FROM THE VAULT
+          </div>
 
-      <div class="hero-meta">
-        <span>{featured.year}</span>
-        <span class="dot">•</span>
-        <span>{featured.genre}</span>
-      </div>
+          <h1>
+            {featuredMovie.title}
+          </h1>
 
-      <p class="hero-description">
-        {featured.description}
-      </p>
+          <div class="hero-meta">
+            <span>{featuredMovie.year}</span>
+            <span>•</span>
+            <span>{featuredMovie.genre}</span>
+          </div>
 
-      <div class="hero-actions">
+          <p>
+            {featuredMovie.description}
+          </p>
 
-        <a
-          href={`/movie/${featured.id}`}
-          class="btn btn-primary"
-        >
-          ▶ WATCH NOW
-        </a>
+          <div class="hero-actions">
 
-        <a
-          href="/random"
-          class="btn btn-accent"
-        >
-          🎲 RANDOM MOVIE
-        </a>
+            <a
+              href={`/movie/${featuredMovie.id}`}
+              class="btn btn-primary"
+            >
+              ▶ WATCH MOVIE
+            </a>
 
-      </div>
+            <a
+              href="/movies"
+              class="btn btn-secondary"
+            >
+              BROWSE VAULT
+            </a>
 
-    </div>
-  </section>
+          </div>
 
+        </div>
 
-  <!-- TRENDING -->
+      </section>
+    ) : (
+      <section class="hero hero-empty">
+
+        <div class="hero-overlay"></div>
+
+        <div class="hero-content">
+
+          <div class="eyebrow">
+            WELCOME TO THE VAULT
+          </div>
+
+          <h1>
+            Movies outside
+            <span>the mainstream.</span>
+          </h1>
+
+          <p>
+            REBELVAULT is waiting for its first movie.
+            Add one through the private Vault Control panel.
+          </p>
+
+          <a
+            href="/movies"
+            class="btn btn-primary"
+          >
+            ENTER THE VAULT
+          </a>
+
+        </div>
+
+      </section>
+    )
+  }
 
   <section class="section">
 
     <div class="section-header">
 
-      <h2 class="section-title">
-        Trending Now
-      </h2>
+      <div>
+        <div class="eyebrow">
+          WHAT'S MOVING
+        </div>
+
+        <h2 class="section-title">
+          Trending Now
+        </h2>
+      </div>
 
       <a
         href="/trending"
@@ -91,56 +175,76 @@ const genres = [
 
     </div>
 
+    {
+      trendingMovies.length > 0 ? (
+        <div class="movie-grid">
 
-    <div class="movie-grid">
+          {trendingMovies.map((movie, index) => (
+            <a
+              href={`/movie/${movie.id}`}
+              class="movie-card"
+            >
 
-      {
-        trending.map((movie) => (
-          <a
-            href={`/movie/${movie.id}`}
-            class="movie-card"
-          >
+              <div class="poster">
 
-            <div class="poster">
+                <img
+                  src={movie.poster}
+                  alt={movie.title}
+                  loading={index < 4 ? 'eager' : 'lazy'}
+                />
 
-              <img
-                src={movie.poster}
-                alt={movie.title}
-                loading="lazy"
-              />
+                <span class="poster-play">
+                  ▶
+                </span>
 
-              <span class="poster-play">
-                ▶
-              </span>
+              </div>
 
-            </div>
+              <h3 class="movie-title">
+                {movie.title}
+              </h3>
 
-            <h3 class="movie-title">
-              {movie.title}
-            </h3>
+              <p class="movie-meta">
+                {movie.year} · {movie.genre}
+              </p>
 
-            <p class="movie-meta">
-              {movie.year} · {movie.genre}
-            </p>
+            </a>
+          ))}
 
-          </a>
-        ))
-      }
+        </div>
+      ) : (
+        <div class="empty-state">
 
-    </div>
+          <div class="empty-icon">
+            ✦
+          </div>
+
+          <h2>
+            The vault is empty.
+          </h2>
+
+          <p>
+            Your first movie will appear here once it is published.
+          </p>
+
+        </div>
+      )
+    }
 
   </section>
 
-
-  <!-- GENRES -->
-
-  <section class="section">
+  <section class="section section-dark">
 
     <div class="section-header">
 
-      <h2 class="section-title">
-        Explore Genres
-      </h2>
+      <div>
+        <div class="eyebrow">
+          FIND YOUR MOOD
+        </div>
+
+        <h2 class="section-title">
+          Explore Genres
+        </h2>
+      </div>
 
       <a
         href="/genres"
@@ -150,7 +254,6 @@ const genres = [
       </a>
 
     </div>
-
 
     <div class="genre-grid">
 
@@ -169,66 +272,32 @@ const genres = [
               {genre.name}
             </h3>
 
-          </a>
-        ))
-      }
-
-    </div>
-
-  </section>
-
-
-  <!-- LATEST -->
-
-  <section class="section">
-
-    <div class="section-header">
-
-      <h2 class="section-title">
-        Just Added
-      </h2>
-
-      <a
-        href="/movies"
-        class="section-link"
-      >
-        Browse all →
-      </a>
-
-    </div>
-
-
-    <div class="movie-grid">
-
-      {
-        latest.map((movie) => (
-          <a
-            href={`/movie/${movie.id}`}
-            class="movie-card"
-          >
-
-            <div class="poster">
-
-              <img
-                src={movie.poster}
-                alt={movie.title}
-                loading="lazy"
-              />
-
-              <span class="poster-play">
-                ▶
-              </span>
-
-            </div>
-
-            <h3 class="movie-title">
-              {movie.title}
-            </h3>
-
-            <p class="movie-meta">
-              {movie.year} · {movie.genre}
+            <p
+              style="
+                margin:14px 0 0;
+                max-width:300px;
+                color:#8f949d;
+                font-size:14px;
+                line-height:1.6;
+              "
+            >
+              {genre.description}
             </p>
 
+            <span
+              style="
+                display:inline-block;
+                margin-top:24px;
+                color:#ff4938;
+                font-size:11px;
+                font-weight:800;
+                letter-spacing:1.4px;
+                text-transform:uppercase;
+              "
+            >
+              Explore →
+            </span>
+
           </a>
         ))
       }
@@ -237,63 +306,98 @@ const genres = [
 
   </section>
 
+  {
+    latestMovies.length > 0 && (
+      <section class="section">
 
-  <!-- RANDOM MOVIE CTA -->
+        <div class="section-header">
+
+          <div>
+            <div class="eyebrow">
+              JUST ADDED
+            </div>
+
+            <h2 class="section-title">
+              Latest Movies
+            </h2>
+          </div>
+
+          <a
+            href="/movies"
+            class="section-link"
+          >
+            View all →
+          </a>
+
+        </div>
+
+        <div class="movie-grid">
+
+          {latestMovies.map((movie) => (
+            <a
+              href={`/movie/${movie.id}`}
+              class="movie-card"
+            >
+
+              <div class="poster">
+
+                <img
+                  src={movie.poster}
+                  alt={movie.title}
+                  loading="lazy"
+                />
+
+                <span class="poster-play">
+                  ▶
+                </span>
+
+              </div>
+
+              <h3 class="movie-title">
+                {movie.title}
+              </h3>
+
+              <p class="movie-meta">
+                {movie.year} · {movie.genre}
+              </p>
+
+            </a>
+          ))}
+
+        </div>
+
+      </section>
+    )
+  }
 
   <section class="section">
 
-    <div
-      style="
-        position:relative;
-        overflow:hidden;
-        padding:70px 50px;
-        border:1px solid rgba(255,255,255,.08);
-        border-radius:14px;
-        background:
-          radial-gradient(
-            circle at 80% 20%,
-            rgba(255,73,56,.16),
-            transparent 35%
-          ),
-          #0d0f13;
-      "
-    >
+    <div class="random-page">
 
-      <div class="eyebrow">
-        CAN'T DECIDE?
+      <div class="random-inner">
+
+        <div class="eyebrow">
+          CAN'T DECIDE?
+        </div>
+
+        <h2>
+          Let REBELVAULT
+          choose for you.
+        </h2>
+
+        <p>
+          No endless scrolling. No algorithm telling you what to watch.
+          Just pick a random movie and press play.
+        </p>
+
+        <a
+          href="/random"
+          class="btn btn-accent"
+        >
+          🎲 RANDOM MOVIE
+        </a>
+
       </div>
-
-      <h2
-        style="
-          max-width:650px;
-          margin:0;
-          font-size:clamp(34px,5vw,62px);
-          line-height:.95;
-          letter-spacing:-3px;
-        "
-      >
-        Let REBELVAULT
-        choose your next movie.
-      </h2>
-
-      <p
-        style="
-          max-width:550px;
-          margin:20px 0 0;
-          color:#9b9fa8;
-          line-height:1.7;
-        "
-      >
-        One click. One random movie. No endless scrolling.
-      </p>
-
-      <a
-        href="/random"
-        class="btn btn-primary"
-        style="margin-top:26px;"
-      >
-        🎲 GIVE ME A MOVIE
-      </a>
 
     </div>
 
