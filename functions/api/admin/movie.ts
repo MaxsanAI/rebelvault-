@@ -2,35 +2,8 @@ interface Env {
   DB: D1Database;
 }
 
-type MovieInput = {
-  title?: string;
-  year?: number | string;
-  genre?: string;
-  poster?: string;
-  backdrop?: string;
-  embed?: string;
-  description?: string;
-  featured?: boolean;
-};
-
-const ALLOWED_GENRES = [
-  'Action',
-  'Horror',
-  'Sci-Fi',
-  'Thriller',
-  'Comedy',
-  'Drama',
-  'Crime',
-  'Adventure',
-];
-
-function slugify(value: string): string {
-  return value
-    .toLowerCase()
-    .trim()
-    .replace(/[^a-z0-9]+/g, '-')
-    .replace(/^-+|-+$/g, '');
-}
+const COOKIE_NAME = 'rebelvault_admin';
+const COOKIE_VALUE = 'authenticated';
 
 function json(
   data: Record<string, unknown>,
@@ -44,30 +17,94 @@ function json(
   });
 }
 
-export const onRequestPost: PagesFunction<Env> = async (context) => {
+function isAuthenticated(request: Request): boolean {
+  const cookieHeader = request.headers.get('Cookie') || '';
+
+  return cookieHeader
+    .split(';')
+    .map((cookie) => cookie.trim())
+    .some(
+      (cookie) =>
+        cookie === `${COOKIE_NAME}=${COOKIE_VALUE}`
+    );
+}
+
+function slugify(value: string): string {
+  return value
+    .normalize('NFKD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .toLowerCase()
+    .trim()
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/^-+|-+$/g, '')
+    .slice(0, 80);
+}
+
+function isValidYouTubeEmbed(value: string): boolean {
   try {
+    const url = new URL(value);
+
+    const allowedHosts = [
+      'youtube.com',
+      'www.youtube.com',
+      'youtube-nocookie.com',
+      'www.youtube-nocookie.com',
+    ];
+
+    if (!allowedHosts.includes(url.hostname.toLowerCase())) {
+      return false;
+    }
+
+    return url.pathname.startsWith('/embed/');
+  } catch {
+    return false;
+  }
+}
+
+export const onRequestPost: PagesFunction<Env> = async (
+  context
+) => {
+  try {
+    if (!isAuthenticated(context.request)) {
+      return json(
+        {
+          success: false,
+          error: 'Authentication required.',
+        },
+        401
+      );
+    }
+
     if (!context.env.DB) {
       return json(
         {
           success: false,
-          error: 'D1 database binding "DB" is not configured.',
+          error: 'D1 database binding DB is not configured.',
         },
         500
       );
     }
 
-    const body = (await context.request.json()) as MovieInput;
+    const body = await context.request.json<{
+      title?: string;
+      year?: number | string;
+      genre?: string;
+      poster?: string;
+      backdrop?: string;
+      description?: string;
+      embed?: string;
+      featured?: boolean;
+    }>();
 
     const title = String(body.title ?? '').trim();
     const genre = String(body.genre ?? '').trim();
     const poster = String(body.poster ?? '').trim();
     const backdrop = String(body.backdrop ?? '').trim();
-    const embed = String(body.embed ?? '').trim();
     const description = String(body.description ?? '').trim();
+    const embed = String(body.embed ?? '').trim();
 
     const year = Number(body.year);
-
-    const featured = body.featured === true;
+    const featured = Boolean(body.featured);
 
     if (!title) {
       return json(
@@ -79,21 +116,25 @@ export const onRequestPost: PagesFunction<Env> = async (context) => {
       );
     }
 
-    if (!Number.isInteger(year) || year < 1888 || year > 2100) {
+    if (
+      !Number.isInteger(year) ||
+      year < 1888 ||
+      year > 2100
+    ) {
       return json(
         {
           success: false,
-          error: 'A valid movie year is required.',
+          error: 'Enter a valid movie year.',
         },
         400
       );
     }
 
-    if (!ALLOWED_GENRES.includes(genre)) {
+    if (!genre) {
       return json(
         {
           success: false,
-          error: 'Invalid movie genre.',
+          error: 'Genre is required.',
         },
         400
       );
@@ -119,70 +160,30 @@ export const onRequestPost: PagesFunction<Env> = async (context) => {
       );
     }
 
-    if (!embed) {
-      return json(
-        {
-          success: false,
-          error: 'YouTube embed URL is required.',
-        },
-        400
-      );
-    }
-
     if (!description) {
       return json(
         {
           success: false,
-          error: 'Movie description is required.',
+          error: 'Description is required.',
         },
         400
       );
     }
 
-    let embedUrl: URL;
-
-    try {
-      embedUrl = new URL(embed);
-    } catch {
+    if (!embed || !isValidYouTubeEmbed(embed)) {
       return json(
         {
           success: false,
-          error: 'Invalid YouTube embed URL.',
+          error:
+            'Enter a valid YouTube or YouTube NoCookie embed URL.',
         },
         400
       );
     }
 
-    const allowedEmbedHosts = [
-      'www.youtube.com',
-      'youtube.com',
-      'www.youtube-nocookie.com',
-      'youtube-nocookie.com',
-    ];
+    const baseId = slugify(title);
 
-    if (!allowedEmbedHosts.includes(embedUrl.hostname)) {
-      return json(
-        {
-          success: false,
-          error: 'Only YouTube embed URLs are allowed.',
-        },
-        400
-      );
-    }
-
-    if (!embedUrl.pathname.startsWith('/embed/')) {
-      return json(
-        {
-          success: false,
-          error: 'The YouTube URL must use the /embed/ format.',
-        },
-        400
-      );
-    }
-
-    const baseSlug = slugify(title);
-
-    if (!baseSlug) {
+    if (!baseId) {
       return json(
         {
           success: false,
@@ -192,28 +193,20 @@ export const onRequestPost: PagesFunction<Env> = async (context) => {
       );
     }
 
-    let id = baseSlug;
+    let id = baseId;
 
     const existing = await context.env.DB
       .prepare(
-        `SELECT id FROM movies WHERE id = ? LIMIT 1`
+        `SELECT id
+         FROM movies
+         WHERE id = ?
+         LIMIT 1`
       )
       .bind(id)
       .first<{ id: string }>();
 
     if (existing) {
-      id = `${baseSlug}-${year}`;
-    }
-
-    const secondExisting = await context.env.DB
-      .prepare(
-        `SELECT id FROM movies WHERE id = ? LIMIT 1`
-      )
-      .bind(id)
-      .first<{ id: string }>();
-
-    if (secondExisting) {
-      id = `${baseSlug}-${year}-${Date.now().toString().slice(-6)}`;
+      id = `${baseId}-${Date.now().toString(36)}`;
     }
 
     if (featured) {
@@ -237,10 +230,9 @@ export const onRequestPost: PagesFunction<Env> = async (context) => {
           backdrop,
           description,
           embed,
-          featured,
-          created_at
+          featured
         )
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, datetime('now'))`
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`
       )
       .bind(
         id,
@@ -255,31 +247,31 @@ export const onRequestPost: PagesFunction<Env> = async (context) => {
       )
       .run();
 
-    return json(
-      {
-        success: true,
-        message: 'Movie added successfully.',
-        movie: {
-          id,
-          title,
-          year,
-          genre,
-          poster,
-          backdrop,
-          description,
-          embed,
-          featured,
-        },
+    return json({
+      success: true,
+      message: 'Movie published successfully.',
+      movie: {
+        id,
+        title,
+        year,
+        genre,
+        poster,
+        backdrop,
+        description,
+        embed,
+        featured,
       },
-      201
-    );
+    });
   } catch (error) {
-    console.error('REBELVAULT add movie error:', error);
+    console.error(
+      'REBELVAULT movie creation error:',
+      error
+    );
 
     return json(
       {
         success: false,
-        error: 'Unable to save movie.',
+        error: 'Unable to publish movie.',
       },
       500
     );
