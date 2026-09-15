@@ -1,0 +1,91 @@
+---
+import Layout from '../layouts/Layout.astro';
+import { movies } from '../data/movies';
+
+const sortedMovies = [...movies].sort((a, b) => b.year - a.year);
+---
+
+<Layout
+  title="Movies — REBELVAULT"
+  description="Browse the REBELVAULT movie collection."
+>
+
+  <section class="section page-section">
+
+    <div class="section-header">
+      <div>
+        <div class="eyebrow">THE VAULT</div>
+
+        <h1 class="section-title">
+          All Movies
+        </h1>
+      </div>
+
+      <span class="movie-count">
+        {movies.length} {movies.length === 1 ? 'movie' : 'movies'}
+      </span>
+    </div>
+
+    {
+      sortedMovies.length > 0 ? (
+        <div class="movie-grid">
+
+          {sortedMovies.map((movie) => (
+            <a
+              href={`/movie/${movie.id}`}
+              class="movie-card"
+            >
+
+              <div class="poster">
+
+                <img
+                  src={movie.poster}
+                  alt={movie.title}
+                  loading="lazy"
+                />
+
+                <span class="poster-play">
+                  ▶
+                </span>
+
+              </div>
+
+              <h2 class="movie-title">
+                {movie.title}
+              </h2>
+
+              <p class="movie-meta">
+                {movie.year} · {movie.genre}
+              </p>
+
+            </a>
+          ))}
+
+        </div>
+      ) : (
+        <div class="empty-state">
+
+          <div class="empty-icon">
+            ✦
+          </div>
+
+          <h2>The vault is empty.</h2>
+
+          <p>
+            New movies will appear here once they are added to REBELVAULT.
+          </p>
+
+          <a
+            href="/"
+            class="btn btn-primary"
+          >
+            BACK TO HOME
+          </a>
+
+        </div>
+      )
+    }
+
+  </section>
+
+</Layout>
