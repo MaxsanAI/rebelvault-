@@ -13,13 +13,13 @@ function json(
   return Response.json(data, {
     status,
     headers: {
-      'Cache-Control': 'no-store',
+      'Cache-Control': 'no-store, no-cache, must-revalidate',
       ...headers,
     },
   });
 }
 
-function cookieOptions() {
+function buildAuthCookie(): string {
   return [
     `${COOKIE_NAME}=${COOKIE_VALUE}`,
     'Path=/',
@@ -30,7 +30,9 @@ function cookieOptions() {
   ].join('; ');
 }
 
-export const onRequestPost: PagesFunction<Env> = async (context) => {
+export const onRequestPost: PagesFunction<Env> = async (
+  context
+) => {
   try {
     if (!context.env.ADMIN_PASSWORD) {
       return json(
@@ -42,11 +44,27 @@ export const onRequestPost: PagesFunction<Env> = async (context) => {
       );
     }
 
-    const body = await context.request.json<{
+    let body: {
       password?: string;
-    }>();
+    };
 
-    const password = String(body.password ?? '');
+    try {
+      body = await context.request.json<{
+        password?: string;
+      }>();
+    } catch {
+      return json(
+        {
+          success: false,
+          error: 'Invalid request.',
+        },
+        400
+      );
+    }
+
+    const password = String(
+      body.password ?? ''
+    );
 
     if (!password) {
       return json(
@@ -58,7 +76,9 @@ export const onRequestPost: PagesFunction<Env> = async (context) => {
       );
     }
 
-    if (password !== context.env.ADMIN_PASSWORD) {
+    if (
+      password !== context.env.ADMIN_PASSWORD
+    ) {
       return json(
         {
           success: false,
@@ -75,11 +95,14 @@ export const onRequestPost: PagesFunction<Env> = async (context) => {
       },
       200,
       {
-        'Set-Cookie': cookieOptions(),
+        'Set-Cookie': buildAuthCookie(),
       }
     );
   } catch (error) {
-    console.error('REBELVAULT login error:', error);
+    console.error(
+      'REBELVAULT login error:',
+      error
+    );
 
     return json(
       {
