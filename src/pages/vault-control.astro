@@ -32,7 +32,7 @@ import Layout from '../layouts/Layout.astro';
 
     <div class="vault-grid">
 
-      <!-- ADD MOVIE -->
+      <!-- ADD / EDIT MOVIE -->
 
       <section class="vault-panel">
         <div class="vault-panel-header">
@@ -41,7 +41,7 @@ import Layout from '../layouts/Layout.astro';
               01
             </span>
 
-            <h2>
+            <h2 id="form-title">
               Add Movie
             </h2>
           </div>
@@ -55,6 +55,12 @@ import Layout from '../layouts/Layout.astro';
           id="movie-form"
           class="vault-form"
         >
+          <input
+            type="hidden"
+            id="movie-id"
+            name="movie-id"
+          />
+
           <div class="form-group">
             <label for="title">
               Movie Title
@@ -222,13 +228,24 @@ import Layout from '../layouts/Layout.astro';
             </span>
           </label>
 
-          <button
-            type="submit"
-            class="vault-submit"
-            id="submit-button"
-          >
-            ADD MOVIE TO VAULT
-          </button>
+          <div class="form-actions">
+            <button
+              type="submit"
+              class="vault-submit"
+              id="submit-button"
+            >
+              ADD MOVIE TO VAULT
+            </button>
+
+            <button
+              type="button"
+              class="vault-cancel"
+              id="cancel-edit"
+              hidden
+            >
+              CANCEL EDIT
+            </button>
+          </div>
 
           <div
             id="form-message"
@@ -334,7 +351,7 @@ import Layout from '../layouts/Layout.astro';
             </strong>
 
             <p>
-              This panel and movie publishing API require the REBELVAULT authentication cookie.
+              This panel and movie management API require the REBELVAULT authentication cookie.
             </p>
           </div>
         </div>
@@ -377,9 +394,56 @@ import Layout from '../layouts/Layout.astro';
         ></div>
       </aside>
     </div>
+
+
+    <!-- MOVIE LIBRARY -->
+
+    <section class="vault-panel library-panel">
+      <div class="vault-panel-header">
+        <div>
+          <span class="vault-panel-number">
+            03
+          </span>
+
+          <h2>
+            Movie Library
+          </h2>
+        </div>
+
+        <span
+          id="library-count"
+          class="vault-status"
+        >
+          LOADING
+        </span>
+      </div>
+
+      <div
+        id="movie-library"
+        class="movie-library"
+      >
+        <div class="library-empty">
+          Loading vault content...
+        </div>
+      </div>
+    </section>
   </section>
 
+
   <script>
+    type Movie = {
+      id: string;
+      title: string;
+      year: number;
+      genre: string;
+      poster: string;
+      backdrop: string;
+      description: string;
+      embed: string;
+      featured: number | boolean;
+      created_at?: string;
+    };
+
     const form =
       document.querySelector<HTMLFormElement>('#movie-form');
 
@@ -389,11 +453,433 @@ import Layout from '../layouts/Layout.astro';
     const submitButton =
       document.querySelector<HTMLButtonElement>('#submit-button');
 
+    const cancelEditButton =
+      document.querySelector<HTMLButtonElement>('#cancel-edit');
+
     const connectionStatus =
       document.querySelector<HTMLSpanElement>('#connection-status');
 
     const movieResult =
       document.querySelector<HTMLDivElement>('#movie-result');
+
+    const movieLibrary =
+      document.querySelector<HTMLDivElement>('#movie-library');
+
+    const libraryCount =
+      document.querySelector<HTMLSpanElement>('#library-count');
+
+    const formTitle =
+      document.querySelector<HTMLHeadingElement>('#form-title');
+
+    const movieIdInput =
+      document.querySelector<HTMLInputElement>('#movie-id');
+
+    const titleInput =
+      document.querySelector<HTMLInputElement>('#title');
+
+    const yearInput =
+      document.querySelector<HTMLInputElement>('#year');
+
+    const genreInput =
+      document.querySelector<HTMLSelectElement>('#genre');
+
+    const posterInput =
+      document.querySelector<HTMLInputElement>('#poster');
+
+    const backdropInput =
+      document.querySelector<HTMLInputElement>('#backdrop');
+
+    const embedInput =
+      document.querySelector<HTMLInputElement>('#embed');
+
+    const descriptionInput =
+      document.querySelector<HTMLTextAreaElement>('#description');
+
+    const featuredInput =
+      document.querySelector<HTMLInputElement>('#featured');
+
+    let movies: Movie[] = [];
+    let editingMovieId = '';
+
+    function isFeatured(movie: Movie) {
+      return movie.featured === true || movie.featured === 1;
+    }
+
+    function escapeHtml(value: string) {
+      return value
+        .replaceAll('&', '&amp;')
+        .replaceAll('<', '&lt;')
+        .replaceAll('>', '&gt;')
+        .replaceAll('"', '&quot;')
+        .replaceAll("'", '&#039;');
+    }
+
+    function resetForm() {
+      form?.reset();
+
+      if (movieIdInput) {
+        movieIdInput.value = '';
+      }
+
+      editingMovieId = '';
+
+      if (formTitle) {
+        formTitle.textContent = 'Add Movie';
+      }
+
+      if (submitButton) {
+        submitButton.textContent = 'ADD MOVIE TO VAULT';
+      }
+
+      if (cancelEditButton) {
+        cancelEditButton.hidden = true;
+      }
+
+      if (message) {
+        message.className = 'form-message';
+        message.textContent = '';
+      }
+    }
+
+    function showFormMessage(
+      type: 'success' | 'error',
+      text: string
+    ) {
+      if (!message) return;
+
+      message.className = `form-message ${type}`;
+      message.textContent = text;
+    }
+
+    function startEdit(movie: Movie) {
+      editingMovieId = movie.id;
+
+      if (movieIdInput) {
+        movieIdInput.value = movie.id;
+      }
+
+      if (titleInput) {
+        titleInput.value = movie.title;
+      }
+
+      if (yearInput) {
+        yearInput.value = String(movie.year);
+      }
+
+      if (genreInput) {
+        genreInput.value = movie.genre;
+      }
+
+      if (posterInput) {
+        posterInput.value = movie.poster;
+      }
+
+      if (backdropInput) {
+        backdropInput.value = movie.backdrop;
+      }
+
+      if (embedInput) {
+        embedInput.value = movie.embed;
+      }
+
+      if (descriptionInput) {
+        descriptionInput.value = movie.description;
+      }
+
+      if (featuredInput) {
+        featuredInput.checked = isFeatured(movie);
+      }
+
+      if (formTitle) {
+        formTitle.textContent = 'Edit Movie';
+      }
+
+      if (submitButton) {
+        submitButton.textContent = 'SAVE MOVIE CHANGES';
+      }
+
+      if (cancelEditButton) {
+        cancelEditButton.hidden = false;
+      }
+
+      if (message) {
+        message.className = 'form-message';
+        message.textContent = '';
+      }
+
+      window.scrollTo({
+        top: 0,
+        behavior: 'smooth',
+      });
+    }
+
+    async function loadMovies() {
+      if (!movieLibrary) return;
+
+      try {
+        const response = await fetch(
+          '/api/admin/movie',
+          {
+            method: 'GET',
+            headers: {
+              Accept: 'application/json',
+            },
+            credentials: 'same-origin',
+            cache: 'no-store',
+          }
+        );
+
+        let data: any = null;
+
+        try {
+          data = await response.json();
+        } catch {
+          data = null;
+        }
+
+        if (response.status === 401) {
+          window.location.href =
+            '/vault-control/login';
+          return;
+        }
+
+        if (!response.ok || !data?.success) {
+          throw new Error(
+            data?.error ||
+            'Unable to load movie library.'
+          );
+        }
+
+        movies = Array.isArray(data.movies)
+          ? data.movies
+          : [];
+
+        if (libraryCount) {
+          libraryCount.textContent =
+            `${movies.length} ${movies.length === 1 ? 'MOVIE' : 'MOVIES'}`;
+
+          libraryCount.classList.remove('error');
+          libraryCount.classList.add('online');
+        }
+
+        renderMovieLibrary();
+      } catch (error) {
+        if (libraryCount) {
+          libraryCount.textContent = 'ERROR';
+          libraryCount.classList.remove('online');
+          libraryCount.classList.add('error');
+        }
+
+        movieLibrary.innerHTML = `
+          <div class="library-empty error">
+            ${escapeHtml(
+              error instanceof Error
+                ? error.message
+                : 'Unable to load movie library.'
+            )}
+          </div>
+        `;
+      }
+    }
+
+    function renderMovieLibrary() {
+      if (!movieLibrary) return;
+
+      if (!movies.length) {
+        movieLibrary.innerHTML = `
+          <div class="library-empty">
+            No movies have been published yet.
+          </div>
+        `;
+        return;
+      }
+
+      movieLibrary.innerHTML = '';
+
+      for (const movie of movies) {
+        const card =
+          document.createElement('article');
+
+        card.className = 'movie-card';
+
+        const poster =
+          document.createElement('img');
+
+        poster.className = 'movie-card-poster';
+        poster.src = movie.poster;
+        poster.alt = movie.title;
+        poster.loading = 'lazy';
+
+        poster.onerror = () => {
+          poster.style.opacity = '0.2';
+        };
+
+        const content =
+          document.createElement('div');
+
+        content.className = 'movie-card-content';
+
+        const top =
+          document.createElement('div');
+
+        top.className = 'movie-card-top';
+
+        const title =
+          document.createElement('h3');
+
+        title.textContent = movie.title;
+
+        const meta =
+          document.createElement('div');
+
+        meta.className = 'movie-card-meta';
+
+        const metaText =
+          document.createElement('span');
+
+        metaText.textContent =
+          `${movie.year} · ${movie.genre}`;
+
+        meta.appendChild(metaText);
+
+        if (isFeatured(movie)) {
+          const featured =
+            document.createElement('span');
+
+          featured.className = 'movie-featured-badge';
+          featured.textContent = 'FEATURED';
+
+          meta.appendChild(featured);
+        }
+
+        top.appendChild(title);
+        top.appendChild(meta);
+
+        const id =
+          document.createElement('div');
+
+        id.className = 'movie-card-id';
+        id.textContent = `/movie/${movie.id}`;
+
+        const actions =
+          document.createElement('div');
+
+        actions.className = 'movie-card-actions';
+
+        const editButton =
+          document.createElement('button');
+
+        editButton.type = 'button';
+        editButton.className = 'movie-edit-button';
+        editButton.textContent = 'EDIT';
+
+        editButton.addEventListener(
+          'click',
+          () => startEdit(movie)
+        );
+
+        const deleteButton =
+          document.createElement('button');
+
+        deleteButton.type = 'button';
+        deleteButton.className = 'movie-delete-button';
+        deleteButton.textContent = 'DELETE';
+
+        deleteButton.addEventListener(
+          'click',
+          () => deleteMovie(movie, deleteButton)
+        );
+
+        actions.appendChild(editButton);
+        actions.appendChild(deleteButton);
+
+        content.appendChild(top);
+        content.appendChild(id);
+        content.appendChild(actions);
+
+        card.appendChild(poster);
+        card.appendChild(content);
+
+        movieLibrary.appendChild(card);
+      }
+    }
+
+    async function deleteMovie(
+      movie: Movie,
+      button: HTMLButtonElement
+    ) {
+      const confirmed =
+        window.confirm(
+          `Delete "${movie.title}" from REBELVAULT? This cannot be undone.`
+        );
+
+      if (!confirmed) {
+        return;
+      }
+
+      button.disabled = true;
+      button.textContent = 'DELETING...';
+
+      try {
+        const response = await fetch(
+          '/api/admin/movie',
+          {
+            method: 'DELETE',
+            headers: {
+              'Content-Type': 'application/json',
+              Accept: 'application/json',
+            },
+            credentials: 'same-origin',
+            body: JSON.stringify({
+              id: movie.id,
+            }),
+          }
+        );
+
+        let data: any = null;
+
+        try {
+          data = await response.json();
+        } catch {
+          data = null;
+        }
+
+        if (response.status === 401) {
+          window.location.href =
+            '/vault-control/login';
+          return;
+        }
+
+        if (!response.ok || !data?.success) {
+          throw new Error(
+            data?.error ||
+            'Unable to delete movie.'
+          );
+        }
+
+        if (editingMovieId === movie.id) {
+          resetForm();
+        }
+
+        showFormMessage(
+          'success',
+          `“${movie.title}” has been deleted from the vault.`
+        );
+
+        await loadMovies();
+        await checkConnection();
+      } catch (error) {
+        showFormMessage(
+          'error',
+          error instanceof Error
+            ? error.message
+            : 'Unable to delete movie.'
+        );
+
+        button.disabled = false;
+        button.textContent = 'DELETE';
+      }
+    }
 
     async function checkConnection() {
       if (!connectionStatus) return;
@@ -406,13 +892,16 @@ import Layout from '../layouts/Layout.astro';
       connectionStatus.textContent = 'CHECKING';
 
       try {
-        const response = await fetch('/api/movies', {
-          method: 'GET',
-          headers: {
-            Accept: 'application/json',
-          },
-          cache: 'no-store',
-        });
+        const response = await fetch(
+          '/api/movies',
+          {
+            method: 'GET',
+            headers: {
+              Accept: 'application/json',
+            },
+            cache: 'no-store',
+          }
+        );
 
         const data = await response.json();
 
@@ -438,147 +927,196 @@ import Layout from '../layouts/Layout.astro';
 
         connectionStatus.textContent = 'ERROR';
         connectionStatus.classList.add('error');
-
       } catch {
         connectionStatus.textContent = 'OFFLINE';
         connectionStatus.classList.add('error');
       }
     }
 
-    checkConnection();
-
-    form?.addEventListener('submit', async (event) => {
-      event.preventDefault();
-
-      if (
-        !form ||
-        !message ||
-        !submitButton
-      ) {
-        return;
+    cancelEditButton?.addEventListener(
+      'click',
+      () => {
+        resetForm();
+        window.scrollTo({
+          top: 0,
+          behavior: 'smooth',
+        });
       }
+    );
 
-      const formData = new FormData(form);
-
-      const payload = {
-        title: String(
-          formData.get('title') ?? ''
-        ).trim(),
-
-        year: Number(
-          formData.get('year')
-        ),
-
-        genre: String(
-          formData.get('genre') ?? ''
-        ).trim(),
-
-        poster: String(
-          formData.get('poster') ?? ''
-        ).trim(),
-
-        backdrop: String(
-          formData.get('backdrop') ?? ''
-        ).trim(),
-
-        embed: String(
-          formData.get('embed') ?? ''
-        ).trim(),
-
-        description: String(
-          formData.get('description') ?? ''
-        ).trim(),
-
-        featured:
-          formData.get('featured') === 'on',
-      };
-
-      submitButton.disabled = true;
-      submitButton.textContent =
-        'ADDING TO VAULT...';
-
-      message.className =
-        'form-message';
-
-      message.textContent = '';
-
-      try {
-        const response = await fetch(
-          '/api/admin/movie',
-          {
-            method: 'POST',
-            headers: {
-              'Content-Type':
-                'application/json',
-
-              Accept:
-                'application/json',
-            },
-            credentials: 'same-origin',
-            body: JSON.stringify(payload),
-          }
-        );
-
-        let data: any = null;
-
-        try {
-          data = await response.json();
-        } catch {
-          data = null;
-        }
+    form?.addEventListener(
+      'submit',
+      async (event) => {
+        event.preventDefault();
 
         if (
-          !response.ok ||
-          !data?.success
+          !form ||
+          !message ||
+          !submitButton
         ) {
-          if (response.status === 401) {
+          return;
+        }
+
+        const formData =
+          new FormData(form);
+
+        const payload = {
+          id: String(
+            formData.get('movie-id') ?? ''
+          ).trim(),
+
+          title: String(
+            formData.get('title') ?? ''
+          ).trim(),
+
+          year: Number(
+            formData.get('year')
+          ),
+
+          genre: String(
+            formData.get('genre') ?? ''
+          ).trim(),
+
+          poster: String(
+            formData.get('poster') ?? ''
+          ).trim(),
+
+          backdrop: String(
+            formData.get('backdrop') ?? ''
+          ).trim(),
+
+          embed: String(
+            formData.get('embed') ?? ''
+          ).trim(),
+
+          description: String(
+            formData.get('description') ?? ''
+          ).trim(),
+
+          featured:
+            formData.get('featured') === 'on',
+        };
+
+        const isEditing =
+          Boolean(editingMovieId);
+
+        submitButton.disabled = true;
+
+        submitButton.textContent =
+          isEditing
+            ? 'SAVING CHANGES...'
+            : 'ADDING TO VAULT...';
+
+        message.className =
+          'form-message';
+
+        message.textContent = '';
+
+        try {
+          const response =
+            await fetch(
+              '/api/admin/movie',
+              {
+                method:
+                  isEditing
+                    ? 'PUT'
+                    : 'POST',
+
+                headers: {
+                  'Content-Type':
+                    'application/json',
+
+                  Accept:
+                    'application/json',
+                },
+
+                credentials:
+                  'same-origin',
+
+                body:
+                  JSON.stringify(
+                    payload
+                  ),
+              }
+            );
+
+          let data: any = null;
+
+          try {
+            data =
+              await response.json();
+          } catch {
+            data = null;
+          }
+
+          if (
+            response.status === 401
+          ) {
             window.location.href =
               '/vault-control/login';
 
             return;
           }
 
-          throw new Error(
-            data?.error ||
-            'Unable to add movie.'
+          if (
+            !response.ok ||
+            !data?.success
+          ) {
+            throw new Error(
+              data?.error ||
+              (
+                isEditing
+                  ? 'Unable to update movie.'
+                  : 'Unable to add movie.'
+              )
+            );
+          }
+
+          showFormMessage(
+            'success',
+            isEditing
+              ? `“${data.movie.title}” has been updated.`
+              : `“${data.movie.title}” has been added to the vault.`
           );
+
+          if (movieResult) {
+            movieResult.innerHTML = `
+              <span>${isEditing ? 'LAST UPDATED' : 'LAST PUBLISHED'}</span>
+              <strong>${escapeHtml(data.movie.title)}</strong>
+              <small>/movie/${escapeHtml(data.movie.id)}</small>
+            `;
+          }
+
+          resetForm();
+
+          await loadMovies();
+          await checkConnection();
+        } catch (error) {
+          showFormMessage(
+            'error',
+            error instanceof Error
+              ? error.message
+              : (
+                  isEditing
+                    ? 'Unable to update movie.'
+                    : 'Unable to add movie.'
+                )
+          );
+        } finally {
+          submitButton.disabled = false;
+
+          submitButton.textContent =
+            editingMovieId
+              ? 'SAVE MOVIE CHANGES'
+              : 'ADD MOVIE TO VAULT';
         }
-
-        message.className =
-          'form-message success';
-
-        message.textContent =
-          `“${data.movie.title}” has been added to the vault.`;
-
-        form.reset();
-
-        if (movieResult) {
-          movieResult.innerHTML = `
-            <span>LAST PUBLISHED</span>
-            <strong>${data.movie.title}</strong>
-            <small>/movie/${data.movie.id}</small>
-          `;
-        }
-
-        await checkConnection();
-
-      } catch (error) {
-        message.className =
-          'form-message error';
-
-        message.textContent =
-          error instanceof Error
-            ? error.message
-            : 'Unable to add movie.';
-
-      } finally {
-        submitButton.disabled = false;
-
-        submitButton.textContent =
-          'ADD MOVIE TO VAULT';
       }
-    });
+    );
+
+    checkConnection();
+    loadMovies();
   </script>
+
 
   <style>
     .vault-control {
@@ -635,6 +1173,10 @@ import Layout from '../layouts/Layout.astro';
         ),
         #0d0f13;
       padding: 32px;
+    }
+
+    .library-panel {
+      margin-top: 24px;
     }
 
     .vault-panel-header {
@@ -816,21 +1358,31 @@ import Layout from '../layouts/Layout.astro';
       font-size: 11px;
     }
 
-    .vault-submit {
-      border: 0;
+    .form-actions {
+      display: grid;
+      grid-template-columns: 1fr auto;
+      gap: 10px;
+    }
+
+    .vault-submit,
+    .vault-cancel {
       border-radius: 8px;
       padding: 16px 20px;
-      background: #ff4938;
-      color: #fff;
-      cursor: pointer;
       font: inherit;
       font-size: 11px;
       font-weight: 900;
       letter-spacing: 1.4px;
+      cursor: pointer;
       transition:
         transform .2s ease,
         background .2s ease,
         opacity .2s ease;
+    }
+
+    .vault-submit {
+      border: 0;
+      background: #ff4938;
+      color: #fff;
     }
 
     .vault-submit:hover:not(:disabled) {
@@ -841,6 +1393,17 @@ import Layout from '../layouts/Layout.astro';
     .vault-submit:disabled {
       cursor: wait;
       opacity: .6;
+    }
+
+    .vault-cancel {
+      border: 1px solid rgba(255,255,255,.1);
+      background: rgba(255,255,255,.03);
+      color: #aeb2b9;
+    }
+
+    .vault-cancel:hover {
+      background: rgba(255,255,255,.06);
+      color: #fff;
     }
 
     .form-message {
@@ -1006,6 +1569,161 @@ import Layout from '../layouts/Layout.astro';
       font-size: 11px;
     }
 
+    /* MOVIE LIBRARY */
+
+    .movie-library {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 14px;
+    }
+
+    .movie-card {
+      display: grid;
+      grid-template-columns: 82px minmax(0, 1fr);
+      min-height: 130px;
+      overflow: hidden;
+      border: 1px solid rgba(255,255,255,.07);
+      border-radius: 10px;
+      background: rgba(255,255,255,.015);
+      transition:
+        border-color .2s ease,
+        transform .2s ease;
+    }
+
+    .movie-card:hover {
+      border-color: rgba(255,73,56,.3);
+      transform: translateY(-2px);
+    }
+
+    .movie-card-poster {
+      width: 82px;
+      height: 130px;
+      object-fit: cover;
+      background: #08090c;
+    }
+
+    .movie-card-content {
+      display: flex;
+      flex-direction: column;
+      min-width: 0;
+      padding: 15px;
+    }
+
+    .movie-card-top {
+      min-width: 0;
+    }
+
+    .movie-card h3 {
+      margin: 0 0 8px;
+      color: #f0f1f3;
+      font-size: 16px;
+      line-height: 1.15;
+      letter-spacing: -.3px;
+    }
+
+    .movie-card-meta {
+      display: flex;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 7px;
+      color: #737983;
+      font-size: 10px;
+      text-transform: uppercase;
+      letter-spacing: .8px;
+    }
+
+    .movie-featured-badge {
+      padding: 3px 6px;
+      border: 1px solid rgba(255,73,56,.25);
+      border-radius: 4px;
+      color: #ff6b5d;
+      font-size: 8px;
+      font-weight: 900;
+      letter-spacing: 1px;
+    }
+
+    .movie-card-id {
+      margin-top: 9px;
+      overflow: hidden;
+      color: #555b65;
+      font-size: 9px;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    .movie-card-actions {
+      display: flex;
+      gap: 7px;
+      margin-top: auto;
+      padding-top: 13px;
+    }
+
+    .movie-edit-button,
+    .movie-delete-button {
+      border-radius: 5px;
+      padding: 8px 10px;
+      font: inherit;
+      font-size: 8px;
+      font-weight: 900;
+      letter-spacing: 1px;
+      cursor: pointer;
+      transition:
+        background .2s ease,
+        border-color .2s ease,
+        color .2s ease,
+        opacity .2s ease;
+    }
+
+    .movie-edit-button {
+      border: 1px solid rgba(255,255,255,.1);
+      background: rgba(255,255,255,.03);
+      color: #c5c8cd;
+    }
+
+    .movie-edit-button:hover {
+      border-color: rgba(255,73,56,.3);
+      background: rgba(255,73,56,.07);
+      color: #fff;
+    }
+
+    .movie-delete-button {
+      border: 1px solid rgba(255,73,56,.14);
+      background: rgba(255,73,56,.025);
+      color: #b9655c;
+    }
+
+    .movie-delete-button:hover {
+      border-color: rgba(255,73,56,.4);
+      background: rgba(255,73,56,.09);
+      color: #ff8175;
+    }
+
+    .movie-delete-button:disabled {
+      cursor: wait;
+      opacity: .5;
+    }
+
+    .library-empty {
+      grid-column: 1 / -1;
+      padding: 45px 20px;
+      border: 1px dashed rgba(255,255,255,.08);
+      border-radius: 10px;
+      color: #686e78;
+      text-align: center;
+      font-size: 12px;
+    }
+
+    .library-empty.error {
+      border-color: rgba(255,73,56,.2);
+      color: #ff7668;
+    }
+
+    @media (max-width: 1000px) {
+      .movie-library {
+        grid-template-columns: 1fr;
+      }
+    }
+
     @media (max-width: 900px) {
       .vault-grid {
         grid-template-columns: 1fr;
@@ -1035,8 +1753,21 @@ import Layout from '../layouts/Layout.astro';
         grid-template-columns: 1fr;
       }
 
+      .form-actions {
+        grid-template-columns: 1fr;
+      }
+
       .vault-panel-header {
         align-items: flex-start;
+      }
+
+      .movie-card {
+        grid-template-columns: 72px minmax(0, 1fr);
+      }
+
+      .movie-card-poster {
+        width: 72px;
+        height: 118px;
       }
     }
   </style>
