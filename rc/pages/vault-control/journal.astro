@@ -1,0 +1,1282 @@
+---
+const categories = [
+  'MOVIE STORIES',
+  'DIRECTORS',
+  'HIDDEN GEMS',
+  'GENRE GUIDES',
+  'WESTERN',
+  'DOCUMENTARY',
+  'CULT MOVIES',
+  'LISTS',
+];
+---
+
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1.0"
+    />
+
+    <title>Journal Control — REBELVAULT</title>
+
+    <style>
+      :root {
+        color-scheme: dark;
+        font-family:
+          Inter, ui-sans-serif, system-ui, -apple-system,
+          BlinkMacSystemFont, "Segoe UI", sans-serif;
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
+      body {
+        margin: 0;
+        min-height: 100vh;
+        background:
+          radial-gradient(
+            circle at top right,
+            rgba(255, 59, 48, 0.08),
+            transparent 32%
+          ),
+          #08090c;
+        color: #fff;
+      }
+
+      button,
+      input,
+      textarea,
+      select {
+        font: inherit;
+      }
+
+      .page {
+        width: min(1400px, calc(100% - 40px));
+        margin: 0 auto;
+        padding: 35px 0 70px;
+      }
+
+      .topbar {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 20px;
+        margin-bottom: 30px;
+      }
+
+      .brand {
+        color: #fff;
+        font-size: 20px;
+        font-weight: 950;
+        letter-spacing: 2px;
+      }
+
+      .brand span {
+        color: #ff3b30;
+      }
+
+      .top-actions {
+        display: flex;
+        gap: 10px;
+      }
+
+      .button,
+      .button-link {
+        border: 1px solid #292d35;
+        background: #111318;
+        color: #fff;
+        padding: 11px 15px;
+        cursor: pointer;
+        font-size: 10px;
+        font-weight: 900;
+        letter-spacing: 1px;
+        text-decoration: none;
+        text-transform: uppercase;
+      }
+
+      .button:hover,
+      .button-link:hover {
+        border-color: #ff3b30;
+      }
+
+      .button.primary {
+        border-color: #ff3b30;
+        background: #ff3b30;
+      }
+
+      .button.danger {
+        color: #ff7068;
+      }
+
+      .layout {
+        display: grid;
+        grid-template-columns: minmax(0, 1.5fr) minmax(320px, 0.8fr);
+        gap: 24px;
+        align-items: start;
+      }
+
+      .panel {
+        border: 1px solid #1d2027;
+        background: rgba(13, 15, 19, 0.94);
+      }
+
+      .panel-header {
+        padding: 20px 22px;
+        border-bottom: 1px solid #1d2027;
+      }
+
+      .panel-header h1,
+      .panel-header h2 {
+        margin: 0;
+        font-size: 15px;
+        font-weight: 900;
+        letter-spacing: 1px;
+        text-transform: uppercase;
+      }
+
+      .panel-body {
+        padding: 22px;
+      }
+
+      .field {
+        margin-bottom: 18px;
+      }
+
+      label {
+        display: block;
+        margin-bottom: 8px;
+        color: #9298a2;
+        font-size: 10px;
+        font-weight: 900;
+        letter-spacing: 1px;
+        text-transform: uppercase;
+      }
+
+      input,
+      textarea,
+      select {
+        width: 100%;
+        border: 1px solid #292d35;
+        outline: none;
+        border-radius: 0;
+        background: #080a0e;
+        color: #fff;
+        padding: 13px 14px;
+      }
+
+      input:focus,
+      textarea:focus,
+      select:focus {
+        border-color: #ff3b30;
+      }
+
+      textarea {
+        min-height: 400px;
+        resize: vertical;
+        line-height: 1.7;
+      }
+
+      #excerpt {
+        min-height: 100px;
+      }
+
+      .slug-row {
+        display: grid;
+        grid-template-columns: 1fr auto;
+        gap: 10px;
+      }
+
+      .toolbar {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 7px;
+        margin-bottom: 9px;
+      }
+
+      .tool {
+        border: 1px solid #292d35;
+        background: #111318;
+        color: #b8bdc6;
+        padding: 8px 10px;
+        cursor: pointer;
+        font-size: 9px;
+        font-weight: 900;
+        letter-spacing: 0.8px;
+      }
+
+      .tool:hover {
+        color: #fff;
+        border-color: #ff3b30;
+      }
+
+      .status {
+        min-height: 20px;
+        margin: 12px 0 0;
+        color: #7f8792;
+        font-size: 12px;
+      }
+
+      .status.error {
+        color: #ff7068;
+      }
+
+      .status.success {
+        color: #6fe3a1;
+      }
+
+      .form-actions {
+        display: flex;
+        gap: 10px;
+        flex-wrap: wrap;
+      }
+
+      .article-list {
+        display: grid;
+        gap: 10px;
+      }
+
+      .article-item {
+        padding: 15px;
+        border: 1px solid #20242b;
+        background: #090b0f;
+      }
+
+      .article-item h3 {
+        margin: 0 0 7px;
+        color: #fff;
+        font-size: 14px;
+        line-height: 1.35;
+      }
+
+      .article-meta {
+        display: flex;
+        gap: 9px;
+        flex-wrap: wrap;
+        margin-bottom: 12px;
+        color: #686f79;
+        font-size: 9px;
+        font-weight: 800;
+        letter-spacing: 0.8px;
+        text-transform: uppercase;
+      }
+
+      .article-meta .published {
+        color: #65d99a;
+      }
+
+      .article-meta .draft {
+        color: #ffb454;
+      }
+
+      .item-actions {
+        display: flex;
+        gap: 7px;
+        flex-wrap: wrap;
+      }
+
+      .small-button {
+        border: 1px solid #292d35;
+        background: #111318;
+        color: #aaa;
+        padding: 7px 9px;
+        cursor: pointer;
+        font-size: 9px;
+        font-weight: 900;
+        letter-spacing: 0.6px;
+        text-transform: uppercase;
+      }
+
+      .small-button:hover {
+        color: #fff;
+        border-color: #555b66;
+      }
+
+      .empty {
+        padding: 30px 10px;
+        color: #626975;
+        text-align: center;
+        font-size: 12px;
+      }
+
+      .checkbox-row {
+        display: flex;
+        align-items: center;
+        gap: 9px;
+        margin-top: 5px;
+      }
+
+      .checkbox-row input {
+        width: auto;
+      }
+
+      .checkbox-row label {
+        margin: 0;
+        color: #b7bdc6;
+      }
+
+      @media (max-width: 950px) {
+        .layout {
+          grid-template-columns: 1fr;
+        }
+      }
+
+      @media (max-width: 600px) {
+        .page {
+          width: min(100% - 24px, 1400px);
+        }
+
+        .topbar {
+          align-items: flex-start;
+          flex-direction: column;
+        }
+
+        .slug-row {
+          grid-template-columns: 1fr;
+        }
+      }
+    </style>
+  </head>
+
+  <body>
+    <main class="page">
+      <header class="topbar">
+        <div class="brand">
+          REBEL<span>VAULT</span> / JOURNAL
+        </div>
+
+        <div class="top-actions">
+          <a
+            href="/vault-control"
+            class="button-link"
+          >
+            VAULT CONTROL
+          </a>
+
+          <a
+            href="/journal"
+            target="_blank"
+            class="button-link"
+          >
+            VIEW JOURNAL
+          </a>
+        </div>
+      </header>
+
+      <div class="layout">
+        <section class="panel">
+          <div class="panel-header">
+            <h1 id="editor-title">
+              New Article
+            </h1>
+          </div>
+
+          <div class="panel-body">
+            <form id="article-form">
+              <input
+                type="hidden"
+                id="article-id"
+              />
+
+              <div class="field">
+                <label for="title">
+                  Title
+                </label>
+
+                <input
+                  id="title"
+                  type="text"
+                  autocomplete="off"
+                  placeholder="The Westerns That Still Matter"
+                  required
+                />
+              </div>
+
+              <div class="field">
+                <label for="slug">
+                  Slug
+                </label>
+
+                <div class="slug-row">
+                  <input
+                    id="slug"
+                    type="text"
+                    autocomplete="off"
+                    placeholder="the-westerns-that-still-matter"
+                  />
+
+                  <button
+                    type="button"
+                    class="button"
+                    id="generate-slug"
+                  >
+                    Generate
+                  </button>
+                </div>
+              </div>
+
+              <div class="field">
+                <label for="category">
+                  Category
+                </label>
+
+                <select id="category">
+                  {categories.map((category) => (
+                    <option value={category}>
+                      {category}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              <div class="field">
+                <label for="cover-image">
+                  Cover Image URL
+                </label>
+
+                <input
+                  id="cover-image"
+                  type="url"
+                  placeholder="https://..."
+                />
+              </div>
+
+              <div class="field">
+                <label for="excerpt">
+                  Excerpt
+                </label>
+
+                <textarea
+                  id="excerpt"
+                  placeholder="A short description used on the Journal page..."
+                ></textarea>
+              </div>
+
+              <div class="field">
+                <label>
+                  Article Content
+                </label>
+
+                <div class="toolbar">
+                  <button
+                    type="button"
+                    class="tool"
+                    data-action="bold"
+                  >
+                    BOLD
+                  </button>
+
+                  <button
+                    type="button"
+                    class="tool"
+                    data-action="h2"
+                  >
+                    H2
+                  </button>
+
+                  <button
+                    type="button"
+                    class="tool"
+                    data-action="link"
+                  >
+                    LINK
+                  </button>
+
+                  <button
+                    type="button"
+                    class="tool"
+                    data-action="image"
+                  >
+                    IMAGE
+                  </button>
+                </div>
+
+                <textarea
+                  id="content"
+                  placeholder="Write your article here..."
+                  required
+                ></textarea>
+              </div>
+
+              <div class="checkbox-row">
+                <input
+                  id="published"
+                  type="checkbox"
+                />
+
+                <label for="published">
+                  Publish immediately
+                </label>
+              </div>
+
+              <div class="form-actions">
+                <button
+                  type="submit"
+                  class="button primary"
+                  id="save-button"
+                >
+                  Save Article
+                </button>
+
+                <button
+                  type="button"
+                  class="button"
+                  id="new-button"
+                >
+                  New Article
+                </button>
+              </div>
+
+              <div
+                id="status"
+                class="status"
+              ></div>
+            </form>
+          </div>
+        </section>
+
+        <aside class="panel">
+          <div class="panel-header">
+            <h2>Articles</h2>
+          </div>
+
+          <div class="panel-body">
+            <div
+              id="article-list"
+              class="article-list"
+            >
+              <div class="empty">
+                Loading...
+              </div>
+            </div>
+          </div>
+        </aside>
+      </div>
+    </main>
+
+    <script>
+      type Article = {
+        id: string;
+        title: string;
+        slug: string;
+        category: string;
+        excerpt: string;
+        cover_image: string;
+        content: string;
+        published: number;
+        created_at: string;
+        updated_at: string;
+      };
+
+      const form =
+        document.querySelector<HTMLFormElement>(
+          '#article-form'
+        );
+
+      const idInput =
+        document.querySelector<HTMLInputElement>(
+          '#article-id'
+        );
+
+      const titleInput =
+        document.querySelector<HTMLInputElement>(
+          '#title'
+        );
+
+      const slugInput =
+        document.querySelector<HTMLInputElement>(
+          '#slug'
+        );
+
+      const categoryInput =
+        document.querySelector<HTMLSelectElement>(
+          '#category'
+        );
+
+      const coverInput =
+        document.querySelector<HTMLInputElement>(
+          '#cover-image'
+        );
+
+      const excerptInput =
+        document.querySelector<HTMLTextAreaElement>(
+          '#excerpt'
+        );
+
+      const contentInput =
+        document.querySelector<HTMLTextAreaElement>(
+          '#content'
+        );
+
+      const publishedInput =
+        document.querySelector<HTMLInputElement>(
+          '#published'
+        );
+
+      const list =
+        document.querySelector<HTMLDivElement>(
+          '#article-list'
+        );
+
+      const status =
+        document.querySelector<HTMLDivElement>(
+          '#status'
+        );
+
+      const editorTitle =
+        document.querySelector<HTMLHeadingElement>(
+          '#editor-title'
+        );
+
+      const saveButton =
+        document.querySelector<HTMLButtonElement>(
+          '#save-button'
+        );
+
+      function slugify(value: string) {
+        return value
+          .normalize('NFKD')
+          .replace(/[\u0300-\u036f]/g, '')
+          .toLowerCase()
+          .trim()
+          .replace(/[^a-z0-9]+/g, '-')
+          .replace(/^-+|-+$/g, '')
+          .slice(0, 100);
+      }
+
+      function showStatus(
+        message: string,
+        type = ''
+      ) {
+        if (!status) return;
+
+        status.textContent = message;
+        status.className = `status ${type}`;
+      }
+
+      function resetEditor() {
+        if (!form) return;
+
+        form.reset();
+
+        if (idInput) idInput.value = '';
+
+        if (categoryInput) {
+          categoryInput.value =
+            'MOVIE STORIES';
+        }
+
+        if (publishedInput) {
+          publishedInput.checked = false;
+        }
+
+        if (editorTitle) {
+          editorTitle.textContent =
+            'New Article';
+        }
+
+        if (saveButton) {
+          saveButton.textContent =
+            'Save Article';
+        }
+
+        showStatus('');
+      }
+
+      function editArticle(article: Article) {
+        if (idInput) idInput.value = article.id;
+        if (titleInput) titleInput.value = article.title;
+        if (slugInput) slugInput.value = article.slug;
+
+        if (categoryInput) {
+          categoryInput.value = article.category;
+        }
+
+        if (coverInput) {
+          coverInput.value = article.cover_image || '';
+        }
+
+        if (excerptInput) {
+          excerptInput.value = article.excerpt || '';
+        }
+
+        if (contentInput) {
+          contentInput.value = article.content || '';
+        }
+
+        if (publishedInput) {
+          publishedInput.checked =
+            Boolean(article.published);
+        }
+
+        if (editorTitle) {
+          editorTitle.textContent =
+            'Edit Article';
+        }
+
+        if (saveButton) {
+          saveButton.textContent =
+            'Update Article';
+        }
+
+        showStatus(
+          `Editing: ${article.title}`
+        );
+
+        window.scrollTo({
+          top: 0,
+          behavior: 'smooth',
+        });
+      }
+
+      function renderArticles(
+        articles: Article[]
+      ) {
+        if (!list) return;
+
+        if (!articles.length) {
+          list.innerHTML =
+            '<div class="empty">No articles yet.</div>';
+
+          return;
+        }
+
+        list.innerHTML = articles
+          .map((article) => {
+            const statusClass =
+              article.published
+                ? 'published'
+                : 'draft';
+
+            const statusText =
+              article.published
+                ? 'PUBLISHED'
+                : 'DRAFT';
+
+            return `
+              <div class="article-item">
+                <h3>${escapeHtml(
+                  article.title
+                )}</h3>
+
+                <div class="article-meta">
+                  <span>${escapeHtml(
+                    article.category
+                  )}</span>
+
+                  <span class="${statusClass}">
+                    ${statusText}
+                  </span>
+                </div>
+
+                <div class="item-actions">
+                  <button
+                    class="small-button"
+                    data-edit="${article.id}"
+                  >
+                    EDIT
+                  </button>
+
+                  <button
+                    class="small-button"
+                    data-toggle="${article.id}"
+                  >
+                    ${
+                      article.published
+                        ? 'UNPUBLISH'
+                        : 'PUBLISH'
+                    }
+                  </button>
+
+                  ${
+                    article.published
+                      ? `<a
+                          class="small-button"
+                          href="/journal/${encodeURIComponent(
+                            article.slug
+                          )}"
+                          target="_blank"
+                        >VIEW</a>`
+                      : ''
+                  }
+
+                  <button
+                    class="small-button"
+                    data-delete="${article.id}"
+                  >
+                    DELETE
+                  </button>
+                </div>
+              </div>
+            `;
+          })
+          .join('');
+
+        list
+          .querySelectorAll<HTMLElement>(
+            '[data-edit]'
+          )
+          .forEach((button) => {
+            button.addEventListener(
+              'click',
+              () => {
+                const id =
+                  button.dataset.edit;
+
+                const article =
+                  articles.find(
+                    (item) => item.id === id
+                  );
+
+                if (article) {
+                  editArticle(article);
+                }
+              }
+            );
+          });
+
+        list
+          .querySelectorAll<HTMLElement>(
+            '[data-toggle]'
+          )
+          .forEach((button) => {
+            button.addEventListener(
+              'click',
+              async () => {
+                const id =
+                  button.dataset.toggle;
+
+                const article =
+                  articles.find(
+                    (item) => item.id === id
+                  );
+
+                if (!article) return;
+
+                await saveExistingArticle(
+                  article,
+                  !Boolean(article.published)
+                );
+              }
+            );
+          });
+
+        list
+          .querySelectorAll<HTMLElement>(
+            '[data-delete]'
+          )
+          .forEach((button) => {
+            button.addEventListener(
+              'click',
+              async () => {
+                const id =
+                  button.dataset.delete;
+
+                if (!id) return;
+
+                const article =
+                  articles.find(
+                    (item) => item.id === id
+                  );
+
+                if (!article) return;
+
+                const confirmed =
+                  window.confirm(
+                    `Delete "${article.title}"?`
+                  );
+
+                if (!confirmed) return;
+
+                await deleteArticle(id);
+              }
+            );
+          });
+      }
+
+      function escapeHtml(value: string) {
+        return value
+          .replace(/&/g, '&amp;')
+          .replace(/</g, '&lt;')
+          .replace(/>/g, '&gt;')
+          .replace(/"/g, '&quot;')
+          .replace(/'/g, '&#039;');
+      }
+
+      async function loadArticles() {
+        try {
+          const response =
+            await fetch('/api/admin/journal', {
+              cache: 'no-store',
+            });
+
+          if (response.status === 401) {
+            window.location.href =
+              '/vault-control/login';
+
+            return;
+          }
+
+          const data =
+            await response.json();
+
+          if (!data.success) {
+            throw new Error(
+              data.error ||
+                'Unable to load articles.'
+            );
+          }
+
+          renderArticles(
+            data.articles || []
+          );
+        } catch (error) {
+          if (list) {
+            list.innerHTML =
+              '<div class="empty">Unable to load articles.</div>';
+          }
+        }
+      }
+
+      async function deleteArticle(id: string) {
+        try {
+          const response =
+            await fetch(
+              '/api/admin/journal',
+              {
+                method: 'DELETE',
+                headers: {
+                  'Content-Type':
+                    'application/json',
+                },
+                body: JSON.stringify({ id }),
+              }
+            );
+
+          if (response.status === 401) {
+            window.location.href =
+              '/vault-control/login';
+
+            return;
+          }
+
+          const data =
+            await response.json();
+
+          if (!data.success) {
+            throw new Error(
+              data.error ||
+                'Unable to delete article.'
+            );
+          }
+
+          showStatus(
+            'Article deleted.',
+            'success'
+          );
+
+          await loadArticles();
+        } catch (error) {
+          showStatus(
+            error instanceof Error
+              ? error.message
+              : 'Unable to delete article.',
+            'error'
+          );
+        }
+      }
+
+      async function saveExistingArticle(
+        article: Article,
+        published: boolean
+      ) {
+        try {
+          const response =
+            await fetch(
+              '/api/admin/journal',
+              {
+                method: 'PUT',
+                headers: {
+                  'Content-Type':
+                    'application/json',
+                },
+                body: JSON.stringify({
+                  id: article.id,
+                  title: article.title,
+                  slug: article.slug,
+                  category: article.category,
+                  excerpt: article.excerpt,
+                  coverImage:
+                    article.cover_image,
+                  content: article.content,
+                  published,
+                }),
+              }
+            );
+
+          if (response.status === 401) {
+            window.location.href =
+              '/vault-control/login';
+
+            return;
+          }
+
+          const data =
+            await response.json();
+
+          if (!data.success) {
+            throw new Error(
+              data.error ||
+                'Unable to update article.'
+            );
+          }
+
+          showStatus(
+            published
+              ? 'Article published.'
+              : 'Article unpublished.',
+            'success'
+          );
+
+          await loadArticles();
+        } catch (error) {
+          showStatus(
+            error instanceof Error
+              ? error.message
+              : 'Unable to update article.',
+            'error'
+          );
+        }
+      }
+
+      form?.addEventListener(
+        'submit',
+        async (event) => {
+          event.preventDefault();
+
+          const id =
+            idInput?.value.trim() || '';
+
+          const title =
+            titleInput?.value.trim() || '';
+
+          const slug =
+            slugInput?.value.trim() || '';
+
+          const category =
+            categoryInput?.value ||
+            'MOVIE STORIES';
+
+          const coverImage =
+            coverInput?.value.trim() || '';
+
+          const excerpt =
+            excerptInput?.value.trim() || '';
+
+          const content =
+            contentInput?.value.trim() || '';
+
+          const published =
+            publishedInput?.checked ??
+            false;
+
+          if (!title || !content) {
+            showStatus(
+              'Title and content are required.',
+              'error'
+            );
+
+            return;
+          }
+
+          const payload = {
+            ...(id ? { id } : {}),
+            title,
+            slug,
+            category,
+            coverImage,
+            excerpt,
+            content,
+            published,
+          };
+
+          try {
+            if (saveButton) {
+              saveButton.disabled = true;
+              saveButton.textContent =
+                'Saving...';
+            }
+
+            const response =
+              await fetch(
+                '/api/admin/journal',
+                {
+                  method: id ? 'PUT' : 'POST',
+                  headers: {
+                    'Content-Type':
+                      'application/json',
+                  },
+                  body: JSON.stringify(
+                    payload
+                  ),
+                }
+              );
+
+            if (response.status === 401) {
+              window.location.href =
+                '/vault-control/login';
+
+              return;
+            }
+
+            const data =
+              await response.json();
+
+            if (!data.success) {
+              throw new Error(
+                data.error ||
+                  'Unable to save article.'
+              );
+            }
+
+            showStatus(
+              data.message ||
+                'Article saved.',
+              'success'
+            );
+
+            resetEditor();
+
+            await loadArticles();
+          } catch (error) {
+            showStatus(
+              error instanceof Error
+                ? error.message
+                : 'Unable to save article.',
+              'error'
+            );
+          } finally {
+            if (saveButton) {
+              saveButton.disabled = false;
+              saveButton.textContent =
+                id
+                  ? 'Update Article'
+                  : 'Save Article';
+            }
+          }
+        }
+      );
+
+      document
+        .querySelector<HTMLButtonElement>(
+          '#new-button'
+        )
+        ?.addEventListener(
+          'click',
+          resetEditor
+        );
+
+      document
+        .querySelector<HTMLButtonElement>(
+          '#generate-slug'
+        )
+        ?.addEventListener(
+          'click',
+          () => {
+            if (
+              slugInput &&
+              titleInput
+            ) {
+              slugInput.value =
+                slugify(
+                  titleInput.value
+                );
+            }
+          }
+        );
+
+      titleInput?.addEventListener(
+        'blur',
+        () => {
+          if (
+            slugInput &&
+            !slugInput.value.trim()
+          ) {
+            slugInput.value =
+              slugify(
+                titleInput.value
+              );
+          }
+        }
+      );
+
+      document
+        .querySelectorAll<HTMLButtonElement>(
+          '[data-action]'
+        )
+        .forEach((button) => {
+          button.addEventListener(
+            'click',
+            () => {
+              if (!contentInput) return;
+
+              const action =
+                button.dataset.action;
+
+              const start =
+                contentInput.selectionStart;
+
+              const end =
+                contentInput.selectionEnd;
+
+              const selected =
+                contentInput.value.slice(
+                  start,
+                  end
+                );
+
+              let insertion = '';
+
+              if (action === 'bold') {
+                insertion = `**${
+                  selected ||
+                  'bold text'
+                }**`;
+              }
+
+              if (action === 'h2') {
+                insertion = `## ${
+                  selected ||
+                  'Heading'
+                }`;
+              }
+
+              if (action === 'link') {
+                insertion =
+                  `[${selected || 'link text'}](https://example.com)`;
+              }
+
+              if (action === 'image') {
+                insertion =
+                  `![image description](https://example.com/image.jpg)`;
+              }
+
+              contentInput.setRangeText(
+                insertion,
+                start,
+                end,
+                'end'
+              );
+
+              contentInput.focus();
+            }
+          );
+        });
+
+      loadArticles();
+    </script>
+  </body>
+</html>
