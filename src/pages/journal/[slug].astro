@@ -25,7 +25,7 @@ const description =
   article.excerpt ||
   `Read ${article.title} on the REBELVAULT Journal.`;
 
-const publishedDate = new Date(article.created_at).toLocaleDateString(
+const publishedDate = new Date(article.createdAt).toLocaleDateString(
   'en-US',
   {
     year: 'numeric',
@@ -37,10 +37,10 @@ const publishedDate = new Date(article.created_at).toLocaleDateString(
 
 <Layout title={title} description={description}>
   <article class="article-page">
-    {article.cover_image && (
+    {article.coverImage && (
       <div class="article-cover">
         <img
-          src={article.cover_image}
+          src={article.coverImage}
           alt={article.title}
           loading="eager"
         />
@@ -51,7 +51,7 @@ const publishedDate = new Date(article.created_at).toLocaleDateString(
       <div class="article-meta">
         <span>{article.category}</span>
         <span>•</span>
-        <time datetime={article.created_at}>
+        <time datetime={article.createdAt}>
           {publishedDate}
         </time>
       </div>
