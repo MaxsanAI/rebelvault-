@@ -1,0 +1,270 @@
+---
+import Layout from '../../layouts/Layout.astro';
+import { getJournalArticles } from '../../lib/journal';
+
+const db = Astro.locals.runtime.env.DB;
+
+const articles = db
+  ? await getJournalArticles(db, true)
+  : [];
+---
+
+<Layout
+  title="Journal — REBELVAULT"
+  description="Stories, hidden gems, directors, genres and cinema worth discovering."
+>
+  <section class="journal-page">
+    <div class="journal-hero">
+      <span class="eyebrow">FROM THE VAULT</span>
+
+      <h1>
+        THE
+        <span>JOURNAL</span>
+      </h1>
+
+      <p>
+        Stories, hidden gems, directors and cinema worth
+        discovering.
+      </p>
+    </div>
+
+    {articles.length > 0 ? (
+      <div class="journal-grid">
+        {articles.map((article) => (
+          <a
+            href={`/journal/${article.slug}`}
+            class="article-card"
+          >
+            <div class="article-image">
+              {article.coverImage ? (
+                <img
+                  src={article.coverImage}
+                  alt={article.title}
+                  loading="lazy"
+                />
+              ) : (
+                <div class="image-placeholder">
+                  REBELVAULT
+                </div>
+              )}
+
+              <span class="article-category">
+                {article.category}
+              </span>
+            </div>
+
+            <div class="article-body">
+              <span class="article-date">
+                {new Date(
+                  article.createdAt
+                ).toLocaleDateString('en-US', {
+                  month: 'short',
+                  day: 'numeric',
+                  year: 'numeric',
+                })}
+              </span>
+
+              <h2>{article.title}</h2>
+
+              {article.excerpt && (
+                <p>{article.excerpt}</p>
+              )}
+
+              <span class="read-more">
+                READ STORY →
+              </span>
+            </div>
+          </a>
+        ))}
+      </div>
+    ) : (
+      <div class="empty-state">
+        <span>THE JOURNAL IS EMPTY</span>
+        <p>
+          New stories are coming soon.
+        </p>
+      </div>
+    )}
+  </section>
+</Layout>
+
+<style>
+  .journal-page {
+    width: min(1180px, calc(100% - 40px));
+    margin: 0 auto;
+    padding: 72px 0 100px;
+  }
+
+  .journal-hero {
+    max-width: 760px;
+    margin-bottom: 56px;
+  }
+
+  .eyebrow {
+    display: inline-block;
+    margin-bottom: 16px;
+    color: #ff3b30;
+    font-size: 11px;
+    font-weight: 900;
+    letter-spacing: 2px;
+  }
+
+  .journal-hero h1 {
+    margin: 0;
+    color: #fff;
+    font-size: clamp(46px, 8vw, 92px);
+    font-weight: 950;
+    letter-spacing: -4px;
+    line-height: 0.9;
+  }
+
+  .journal-hero h1 span {
+    color: #ff3b30;
+  }
+
+  .journal-hero p {
+    max-width: 620px;
+    margin: 24px 0 0;
+    color: #858b95;
+    font-size: 18px;
+    line-height: 1.7;
+  }
+
+  .journal-grid {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 24px;
+  }
+
+  .article-card {
+    display: block;
+    overflow: hidden;
+    border: 1px solid #1d2027;
+    background: #0d0f13;
+    color: inherit;
+    text-decoration: none;
+    transition:
+      transform 0.25s ease,
+      border-color 0.25s ease;
+  }
+
+  .article-card:hover {
+    transform: translateY(-5px);
+    border-color: #343943;
+  }
+
+  .article-image {
+    position: relative;
+    aspect-ratio: 16 / 9;
+    overflow: hidden;
+    background: #08090c;
+  }
+
+  .article-image img {
+    width: 100%;
+    height: 100%;
+    display: block;
+    object-fit: cover;
+    transition: transform 0.35s ease;
+  }
+
+  .article-card:hover .article-image img {
+    transform: scale(1.04);
+  }
+
+  .image-placeholder {
+    width: 100%;
+    height: 100%;
+    display: grid;
+    place-items: center;
+    color: #343943;
+    font-size: 12px;
+    font-weight: 900;
+    letter-spacing: 2px;
+  }
+
+  .article-category {
+    position: absolute;
+    left: 14px;
+    bottom: 14px;
+    padding: 7px 9px;
+    background: #ff3b30;
+    color: #fff;
+    font-size: 9px;
+    font-weight: 900;
+    letter-spacing: 1px;
+  }
+
+  .article-body {
+    padding: 24px;
+  }
+
+  .article-date {
+    color: #646a74;
+    font-size: 10px;
+    font-weight: 800;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+  }
+
+  .article-body h2 {
+    margin: 12px 0 12px;
+    color: #fff;
+    font-size: 22px;
+    line-height: 1.15;
+  }
+
+  .article-body p {
+    margin: 0 0 20px;
+    color: #858b95;
+    font-size: 14px;
+    line-height: 1.65;
+  }
+
+  .read-more {
+    color: #ff3b30;
+    font-size: 10px;
+    font-weight: 900;
+    letter-spacing: 1px;
+  }
+
+  .empty-state {
+    padding: 70px 20px;
+    border: 1px solid #1d2027;
+    background: #0d0f13;
+    text-align: center;
+  }
+
+  .empty-state span {
+    color: #fff;
+    font-size: 12px;
+    font-weight: 900;
+    letter-spacing: 2px;
+  }
+
+  .empty-state p {
+    margin: 12px 0 0;
+    color: #666c76;
+  }
+
+  @media (max-width: 900px) {
+    .journal-grid {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+  }
+
+  @media (max-width: 600px) {
+    .journal-page {
+      width: min(100% - 28px, 1180px);
+      padding-top: 48px;
+    }
+
+    .journal-hero h1 {
+      letter-spacing: -2px;
+    }
+
+    .journal-grid {
+      grid-template-columns: 1fr;
+    }
+  }
+</style>
