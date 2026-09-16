@@ -1,3 +1,4 @@
+```astro
 ---
 import Layout from '../../layouts/Layout.astro';
 import {
@@ -33,6 +34,12 @@ const publishedDate = new Date(article.createdAt).toLocaleDateString(
     day: 'numeric',
   }
 );
+
+const shareUrl = Astro.url.href;
+const shareText = `${article.title} — REBELVAULT Journal`;
+
+const encodedUrl = encodeURIComponent(shareUrl);
+const encodedText = encodeURIComponent(shareText);
 ---
 
 <Layout title={title} description={description}>
@@ -69,6 +76,55 @@ const publishedDate = new Date(article.createdAt).toLocaleDateString(
         set:html={renderedContent}
       />
 
+      <section class="article-share" aria-label="Share this article">
+        <div class="share-heading">SHARE THIS ARTICLE</div>
+
+        <div class="share-buttons">
+          <a
+            class="share-button"
+            href={`https://x.com/intent/post?text=${encodedText}&url=${encodedUrl}`}
+            target="_blank"
+            rel="noopener noreferrer"
+            aria-label="Share on X"
+          >
+            <span class="share-icon">𝕏</span>
+            <span>X</span>
+          </a>
+
+          <a
+            class="share-button"
+            href={`https://www.facebook.com/sharer/sharer.php?u=${encodedUrl}`}
+            target="_blank"
+            rel="noopener noreferrer"
+            aria-label="Share on Facebook"
+          >
+            <span class="share-icon">f</span>
+            <span>Facebook</span>
+          </a>
+
+          <a
+            class="share-button"
+            href={`https://www.reddit.com/submit?url=${encodedUrl}&title=${encodedText}`}
+            target="_blank"
+            rel="noopener noreferrer"
+            aria-label="Share on Reddit"
+          >
+            <span class="share-icon">●</span>
+            <span>Reddit</span>
+          </a>
+
+          <button
+            type="button"
+            class="share-button"
+            id="copy-link"
+            aria-label="Copy article link"
+          >
+            <span class="share-icon">↗</span>
+            <span id="copy-label">Copy Link</span>
+          </button>
+        </div>
+      </section>
+
       <div class="article-footer">
         <a href="/journal" class="back-link">
           ← Back to Journal
@@ -76,6 +132,37 @@ const publishedDate = new Date(article.createdAt).toLocaleDateString(
       </div>
     </div>
   </article>
+
+  <script>
+    const copyButton = document.getElementById('copy-link');
+    const copyLabel = document.getElementById('copy-label');
+
+    copyButton?.addEventListener('click', async () => {
+      try {
+        await navigator.clipboard.writeText(window.location.href);
+
+        if (copyLabel) {
+          copyLabel.textContent = 'Copied!';
+        }
+
+        setTimeout(() => {
+          if (copyLabel) {
+            copyLabel.textContent = 'Copy Link';
+          }
+        }, 1800);
+      } catch {
+        if (copyLabel) {
+          copyLabel.textContent = 'Copy failed';
+        }
+
+        setTimeout(() => {
+          if (copyLabel) {
+            copyLabel.textContent = 'Copy Link';
+          }
+        }, 1800);
+      }
+    });
+  </script>
 
   <style>
     .article-page {
@@ -188,10 +275,71 @@ const publishedDate = new Date(article.createdAt).toLocaleDateString(
       border: 1px solid rgba(255, 255, 255, 0.08);
     }
 
-    .article-footer {
-      margin-top: 64px;
-      padding-top: 28px;
+    .article-share {
+      margin-top: 72px;
+      padding: 28px 0;
       border-top: 1px solid rgba(255, 255, 255, 0.08);
+      border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+    }
+
+    .share-heading {
+      margin-bottom: 18px;
+      color: #777d87;
+      font-size: 11px;
+      font-weight: 900;
+      letter-spacing: 1.5px;
+      text-transform: uppercase;
+    }
+
+    .share-buttons {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+    }
+
+    .share-button {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 9px;
+      min-height: 42px;
+      padding: 0 16px;
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      border-radius: 8px;
+      background: rgba(255, 255, 255, 0.035);
+      color: #dfe2e6;
+      font-family: inherit;
+      font-size: 12px;
+      font-weight: 800;
+      letter-spacing: 0.2px;
+      text-decoration: none;
+      cursor: pointer;
+      transition:
+        background 0.2s ease,
+        border-color 0.2s ease,
+        color 0.2s ease,
+        transform 0.2s ease;
+    }
+
+    .share-button:hover {
+      border-color: rgba(214, 255, 63, 0.45);
+      background: rgba(214, 255, 63, 0.08);
+      color: #d6ff3f;
+      transform: translateY(-1px);
+    }
+
+    .share-icon {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 18px;
+      font-size: 15px;
+      font-weight: 900;
+    }
+
+    .article-footer {
+      margin-top: 40px;
+      padding-top: 28px;
     }
 
     .back-link {
@@ -238,6 +386,20 @@ const publishedDate = new Date(article.createdAt).toLocaleDateString(
         font-size: 17px;
         line-height: 1.8;
       }
+
+      .article-share {
+        margin-top: 56px;
+      }
+
+      .share-buttons {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+      }
+
+      .share-button {
+        width: 100%;
+      }
     }
   </style>
 </Layout>
+```
