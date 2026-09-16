@@ -9,7 +9,8 @@ export const onRequest = defineMiddleware(
 
     const isAdminPage =
       pathname === '/vault-control' ||
-      pathname === '/vault-control/';
+      pathname === '/vault-control/' ||
+      pathname.startsWith('/vault-control/');
 
     const isAdminApi =
       pathname === '/api/admin' ||
