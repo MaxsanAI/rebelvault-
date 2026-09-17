@@ -16,10 +16,14 @@ export const onRequest = defineMiddleware(
       pathname === '/api/admin' ||
       pathname.startsWith('/api/admin/');
 
+    const isLoginPage =
+      pathname === '/vault-control/login' ||
+      pathname === '/vault-control/login/';
+
     const isLoginApi =
       pathname === '/api/admin/login';
 
-    if (isLoginApi) {
+    if (isLoginPage || isLoginApi) {
       return next();
     }
 
