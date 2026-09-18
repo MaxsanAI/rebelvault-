@@ -312,8 +312,10 @@ const monetagUrl = 'https://omg10.com/4/9027972';
       }
 
       const player = document.getElementById('movie-player');
+
       const fullscreenButton =
         document.getElementById('player-fullscreen');
+
       const closeButton =
         document.getElementById('player-fullscreen-close');
 
@@ -325,6 +327,12 @@ const monetagUrl = 'https://omg10.com/4/9027972';
 
       let telegramWebApp = null;
 
+      /*
+       * Start loading Telegram's SDK immediately.
+       * This avoids waiting for the user to click fullscreen.
+       */
+      const telegramSDKPromise = loadTelegramSDK();
+
       const showCloseButton = () => {
         closeButton.hidden = false;
       };
@@ -333,7 +341,7 @@ const monetagUrl = 'https://omg10.com/4/9027972';
         closeButton.hidden = true;
       };
 
-      const loadTelegramSDK = () => {
+      function loadTelegramSDK() {
         return new Promise((resolve) => {
           if (window.Telegram?.WebApp) {
             resolve(window.Telegram.WebApp);
@@ -362,6 +370,7 @@ const monetagUrl = 'https://omg10.com/4/9027972';
             'https://telegram.org/js/telegram-web-app.js?63';
 
           script.async = true;
+
           script.dataset.rebelvaultTelegramSdk = 'true';
 
           script.onload = () => {
@@ -374,10 +383,48 @@ const monetagUrl = 'https://omg10.com/4/9027972';
 
           document.head.appendChild(script);
         });
+      }
+
+      /*
+       * Request landscape through the browser Screen Orientation API.
+       *
+       * This is intentionally separate from Telegram fullscreen.
+       * Telegram removes its Mini App header with native fullscreen,
+       * while the browser orientation API requests landscape.
+       *
+       * Not every Telegram/WebView/device allows orientation locking.
+       * If rejected, fullscreen still continues normally.
+       */
+      const requestLandscape = () => {
+        try {
+          if (
+            screen.orientation &&
+            typeof screen.orientation.lock === 'function'
+          ) {
+            const result =
+              screen.orientation.lock('landscape');
+
+            if (
+              result &&
+              typeof result.catch === 'function'
+            ) {
+              result.catch(() => {
+                /*
+                 * Orientation locking is not supported
+                 * on this platform.
+                 */
+              });
+            }
+          }
+        } catch {
+          /*
+           * Ignore unsupported orientation locking.
+           */
+        }
       };
 
       const setupTelegram = async () => {
-        telegramWebApp = await loadTelegramSDK();
+        telegramWebApp = await telegramSDKPromise;
 
         if (!telegramWebApp) {
           return;
@@ -413,16 +460,29 @@ const monetagUrl = 'https://omg10.com/4/9027972';
 
         try {
           if (telegramWebApp.onEvent) {
+
             telegramWebApp.onEvent(
               'fullscreenChanged',
               () => {
+
                 if (telegramWebApp?.isFullscreen) {
+
                   document.body.classList.add(
                     'telegram-player-fullscreen'
                   );
 
                   showCloseButton();
+
+                  /*
+                   * Telegram fullscreen is now active.
+                   * Request landscape again at this point because
+                   * some WebViews only allow orientation locking
+                   * after fullscreen has been entered.
+                   */
+                  requestLandscape();
+
                 } else {
+
                   document.body.classList.remove(
                     'telegram-player-fullscreen'
                   );
@@ -432,22 +492,33 @@ const monetagUrl = 'https://omg10.com/4/9027972';
                   );
 
                   hideCloseButton();
+
                 }
+
               }
             );
 
             telegramWebApp.onEvent(
               'fullscreenFailed',
               () => {
+
                 /*
                  * Telegram refused native fullscreen.
-                 * Keep the cinema-mode fallback.
+                 *
+                 * Keep our cinema-mode fallback so the player
+                 * still occupies the available screen.
                  */
                 document.body.classList.add(
                   'player-cinema-mode'
                 );
 
                 showCloseButton();
+
+                /*
+                 * Try landscape even if Telegram fullscreen
+                 * was rejected.
+                 */
+                requestLandscape();
               }
             );
           }
@@ -457,10 +528,10 @@ const monetagUrl = 'https://omg10.com/4/9027972';
       };
 
       const enterFullscreen = async () => {
+
         /*
-         * Activate our fallback immediately.
-         * This also makes the player fill the WebView if
-         * Telegram's native fullscreen API is unavailable.
+         * Immediately activate the local player fullscreen
+         * fallback from the user's gesture.
          */
         document.body.classList.add(
           'player-cinema-mode'
@@ -468,15 +539,28 @@ const monetagUrl = 'https://omg10.com/4/9027972';
 
         showCloseButton();
 
+        /*
+         * Request landscape immediately from the same
+         * user interaction.
+         */
+        requestLandscape();
+
+        /*
+         * The Telegram SDK was already being loaded in
+         * the background when this page opened.
+         */
         if (!telegramWebApp) {
-          telegramWebApp = await loadTelegramSDK();
+          telegramWebApp = await telegramSDKPromise;
         }
 
         /*
-         * THIS is the important part.
+         * IMPORTANT:
          *
-         * Telegram's native Mini App fullscreen mode is
-         * what removes the normal Mini App header area.
+         * Telegram's native Mini App fullscreen is what
+         * removes the normal Mini App header area.
+         *
+         * This is intentionally triggered only when the
+         * movie player fullscreen button is pressed.
          */
         try {
           if (
@@ -484,7 +568,14 @@ const monetagUrl = 'https://omg10.com/4/9027972';
             typeof telegramWebApp.requestFullscreen ===
               'function'
           ) {
+
             telegramWebApp.requestFullscreen();
+
+            /*
+             * Try orientation again immediately after
+             * requesting Telegram fullscreen.
+             */
+            requestLandscape();
 
             return;
           }
@@ -499,16 +590,26 @@ const monetagUrl = 'https://omg10.com/4/9027972';
           if (
             document.documentElement.requestFullscreen
           ) {
+
             await document.documentElement.requestFullscreen();
+
+            /*
+             * Browser fullscreen is now active,
+             * so try landscape again.
+             */
+            requestLandscape();
           }
         } catch {
-          // Cinema mode remains active.
+          /*
+           * Cinema mode remains active.
+           */
         }
       };
 
       const exitFullscreen = async () => {
+
         /*
-         * Tell Telegram to leave its native Mini App
+         * Tell Telegram to leave native Mini App
          * fullscreen mode first.
          */
         try {
@@ -517,6 +618,7 @@ const monetagUrl = 'https://omg10.com/4/9027972';
             typeof telegramWebApp.exitFullscreen ===
               'function'
           ) {
+
             telegramWebApp.exitFullscreen();
           }
         } catch {
@@ -531,10 +633,26 @@ const monetagUrl = 'https://omg10.com/4/9027972';
             document.fullscreenElement &&
             document.exitFullscreen
           ) {
+
             await document.exitFullscreen();
           }
         } catch {
           // Ignore browser fullscreen exit errors.
+        }
+
+        /*
+         * Unlock orientation when possible.
+         */
+        try {
+          if (
+            screen.orientation &&
+            typeof screen.orientation.unlock ===
+              'function'
+          ) {
+            screen.orientation.unlock();
+          }
+        } catch {
+          // Ignore unsupported orientation unlock.
         }
 
         document.body.classList.remove(
@@ -561,8 +679,16 @@ const monetagUrl = 'https://omg10.com/4/9027972';
       document.addEventListener(
         'fullscreenchange',
         () => {
+
           if (document.fullscreenElement) {
+
             showCloseButton();
+
+            /*
+             * Browser fullscreen may have just become active.
+             */
+            requestLandscape();
+
           }
         }
       );
@@ -786,7 +912,9 @@ const monetagUrl = 'https://omg10.com/4/9027972';
 
     /*
      * Telegram native fullscreen mode.
-     * Keep the page itself locked to the viewport.
+     *
+     * This only applies while the movie player is fullscreen.
+     * The normal RebelVault page is untouched.
      */
     body.telegram-player-fullscreen {
       overflow: hidden;
