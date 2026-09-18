@@ -149,17 +149,37 @@ const monetagUrl = 'https://omg10.com/4/9027972';
 
           </div>
 
-          <div class="player-container">
+          <div class="player-container" id="movie-player">
 
             <iframe
               src={movie.embed}
               title={`Watch ${movie.title}`}
               loading="lazy"
-              allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+              allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share; fullscreen"
               allowfullscreen
             ></iframe>
 
+            <button
+              type="button"
+              class="player-fullscreen-btn"
+              id="player-fullscreen"
+              aria-label="Open movie player fullscreen"
+              hidden
+            >
+              ⛶ FULLSCREEN
+            </button>
+
           </div>
+
+          <button
+            type="button"
+            class="player-fullscreen-close"
+            id="player-fullscreen-close"
+            hidden
+            aria-label="Exit fullscreen"
+          >
+            ✕ EXIT
+          </button>
 
           <div class="watch-bottom-cta">
 
@@ -273,6 +293,87 @@ const monetagUrl = 'https://omg10.com/4/9027972';
       </section>
     )
   }
+
+  <script is:inline>
+    (() => {
+      const userAgent = navigator.userAgent || '';
+
+      const isTelegramWebView =
+        /Telegram/i.test(userAgent) ||
+        /TelegramBot/i.test(userAgent);
+
+      if (!isTelegramWebView) {
+        return;
+      }
+
+      const player = document.getElementById('movie-player');
+      const fullscreenButton =
+        document.getElementById('player-fullscreen');
+      const closeButton =
+        document.getElementById('player-fullscreen-close');
+
+      if (!player || !fullscreenButton || !closeButton) {
+        return;
+      }
+
+      fullscreenButton.hidden = false;
+
+      const showCloseButton = () => {
+        closeButton.hidden = false;
+      };
+
+      const hideCloseButton = () => {
+        closeButton.hidden = true;
+      };
+
+      const enterFullscreen = async () => {
+        document.body.classList.add('player-cinema-mode');
+        showCloseButton();
+
+        try {
+          if (document.documentElement.requestFullscreen) {
+            await document.documentElement.requestFullscreen();
+          }
+        } catch {
+          // Telegram WebView may block native fullscreen.
+          // Cinema mode remains active as the fallback.
+        }
+      };
+
+      const exitFullscreen = async () => {
+        document.body.classList.remove('player-cinema-mode');
+        hideCloseButton();
+
+        try {
+          if (document.fullscreenElement && document.exitFullscreen) {
+            await document.exitFullscreen();
+          }
+        } catch {
+          // Ignore WebView fullscreen exit errors.
+        }
+      };
+
+      fullscreenButton.addEventListener(
+        'click',
+        enterFullscreen
+      );
+
+      closeButton.addEventListener(
+        'click',
+        exitFullscreen
+      );
+
+      document.addEventListener('fullscreenchange', () => {
+        if (document.fullscreenElement) {
+          showCloseButton();
+        } else if (
+          !document.body.classList.contains('player-cinema-mode')
+        ) {
+          hideCloseButton();
+        }
+      });
+    })();
+  </script>
 
   <style>
     .watch-page {
@@ -390,6 +491,7 @@ const monetagUrl = 'https://omg10.com/4/9027972';
     }
 
     .player-container {
+      position: relative;
       width: 100%;
       aspect-ratio: 16 / 9;
       overflow: hidden;
@@ -404,6 +506,86 @@ const monetagUrl = 'https://omg10.com/4/9027972';
       height: 100%;
       display: block;
       border: 0;
+    }
+
+    .player-fullscreen-btn,
+    .player-fullscreen-close {
+      appearance: none;
+      border: 1px solid rgba(255, 255, 255, 0.18);
+      background: rgba(8, 9, 12, 0.82);
+      color: #fff;
+      font: inherit;
+      font-size: 11px;
+      font-weight: 900;
+      letter-spacing: 0.8px;
+      cursor: pointer;
+      backdrop-filter: blur(10px);
+      -webkit-backdrop-filter: blur(10px);
+    }
+
+    .player-fullscreen-btn {
+      position: absolute;
+      top: 14px;
+      right: 14px;
+      z-index: 5;
+      padding: 10px 13px;
+      border-radius: 7px;
+    }
+
+    .player-fullscreen-close {
+      position: fixed;
+      top: max(14px, env(safe-area-inset-top));
+      right: 14px;
+      z-index: 2147483647;
+      padding: 10px 13px;
+      border-radius: 7px;
+    }
+
+    .player-fullscreen-btn:hover,
+    .player-fullscreen-close:hover {
+      background: rgba(255, 255, 255, 0.12);
+    }
+
+    .player-container:fullscreen {
+      width: 100vw;
+      height: 100vh;
+      height: 100dvh;
+      max-width: none;
+      aspect-ratio: auto;
+      border: 0;
+      border-radius: 0;
+      box-shadow: none;
+      background: #000;
+    }
+
+    .player-container:fullscreen iframe {
+      width: 100%;
+      height: 100%;
+    }
+
+    body.player-cinema-mode {
+      overflow: hidden;
+    }
+
+    body.player-cinema-mode .player-container {
+      position: fixed;
+      inset: 0;
+      z-index: 2147483000;
+      width: 100vw;
+      height: 100vh;
+      height: 100dvh;
+      max-width: none;
+      aspect-ratio: auto;
+      margin: 0;
+      border: 0;
+      border-radius: 0;
+      box-shadow: none;
+      background: #000;
+    }
+
+    body.player-cinema-mode .player-container iframe {
+      width: 100%;
+      height: 100%;
     }
 
     .watch-bottom-cta {
