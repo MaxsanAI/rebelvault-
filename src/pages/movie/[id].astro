@@ -190,6 +190,43 @@ const monetagUrl = 'https://omg10.com/4/9027972';
               </button>
             </div>
 
+            <!-- Final support CTA -->
+            <div
+              class="rebelvault-support"
+              id="rebelvault-support"
+              aria-hidden="true"
+            >
+              <button
+                type="button"
+                class="rebelvault-support-close"
+                id="rebelvault-support-close"
+                aria-label="Close support message"
+              >
+                ×
+              </button>
+
+              <div class="rebelvault-support-title">
+                🎬 <strong>ENJOYED THE MOVIE?</strong>
+              </div>
+
+              <div class="rebelvault-support-text">
+                Help keep REBELVAULT running.
+              </div>
+
+              <div class="rebelvault-support-text">
+                ❤️ Support the site by checking out our sponsor.
+              </div>
+
+              <a
+                href={monetagUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                class="rebelvault-support-link"
+              >
+                👉 CLICK TO SUPPORT REBELVAULT
+              </a>
+            </div>
+
             <button
               type="button"
               class="player-fullscreen-btn"
@@ -331,14 +368,6 @@ const monetagUrl = 'https://omg10.com/4/9027972';
        * -------------------------------------------------------
        * REBELVAULT SMALL PLAYER PROMO
        * -------------------------------------------------------
-       *
-       * Shows a small RebelVault message:
-       *
-       * 1. Around 10 seconds
-       * 2. Around 50% of the movie
-       * 3. Around 90% of the movie
-       *
-       * Each display lasts 10 seconds.
        */
 
       const promo =
@@ -346,6 +375,12 @@ const monetagUrl = 'https://omg10.com/4/9027972';
 
       const promoClose =
         document.getElementById('rebelvault-promo-close');
+
+      const support =
+        document.getElementById('rebelvault-support');
+
+      const supportClose =
+        document.getElementById('rebelvault-support-close');
 
       const player =
         document.getElementById('movie-player');
@@ -415,23 +450,6 @@ const monetagUrl = 'https://omg10.com/4/9027972';
           hidePromo();
         });
 
-        /*
-         * -------------------------------------------------------
-         * FALLBACK TIMING
-         * -------------------------------------------------------
-         *
-         * First:
-         * approximately 10 seconds after page load.
-         *
-         * Middle:
-         * approximately 5 minutes after page load.
-         *
-         * Final:
-         * approximately 10 minutes after page load.
-         *
-         * YouTube playback timing overrides these when available.
-         */
-
         const fallbackFirstTimer =
           window.setTimeout(() => {
             showPromo('first');
@@ -455,6 +473,61 @@ const monetagUrl = 'https://omg10.com/4/9027972';
 
         let youtubePlayer = null;
         let youtubeReady = false;
+        let supportShown = false;
+
+        const SUPPORT_DURATION = 30000;
+        const SUPPORT_BEFORE_END = 30;
+
+        let supportTimer = null;
+
+        function showSupportCard() {
+          if (
+            supportShown ||
+            !support
+          ) {
+            return;
+          }
+
+          supportShown = true;
+
+          support.classList.add('is-visible');
+          support.setAttribute(
+            'aria-hidden',
+            'false'
+          );
+
+          if (supportTimer) {
+            window.clearTimeout(supportTimer);
+          }
+
+          supportTimer = window.setTimeout(() => {
+            hideSupportCard();
+          }, SUPPORT_DURATION);
+        }
+
+        function hideSupportCard() {
+          if (!support) {
+            return;
+          }
+
+          support.classList.remove('is-visible');
+          support.setAttribute(
+            'aria-hidden',
+            'true'
+          );
+        }
+
+        if (supportClose) {
+          supportClose.addEventListener(
+            'click',
+            (event) => {
+              event.preventDefault();
+              event.stopPropagation();
+
+              hideSupportCard();
+            }
+          );
+        }
 
         function loadYouTubeAPI() {
           if (window.YT && window.YT.Player) {
@@ -582,7 +655,7 @@ const monetagUrl = 'https://omg10.com/4/9027972';
 
             if (
               !duration ||
-              !currentTime
+              currentTime < 0
             ) {
               return;
             }
@@ -613,7 +686,7 @@ const monetagUrl = 'https://omg10.com/4/9027972';
             }
 
             /*
-             * Final appearance:
+             * Final small promo:
              * approximately 90% through.
              */
             if (
@@ -622,10 +695,24 @@ const monetagUrl = 'https://omg10.com/4/9027972';
             ) {
               showPromo('final');
             }
+
+            /*
+             * Support card:
+             * exactly when approximately 30 seconds
+             * remain in the movie.
+             */
+            const remaining =
+              duration - currentTime;
+
+            if (
+              remaining <= SUPPORT_BEFORE_END &&
+              remaining > 0
+            ) {
+              showSupportCard();
+            }
           } catch {
             /*
              * Ignore player API errors.
-             * Fallback timers remain active.
              */
           }
         }
@@ -1139,6 +1226,9 @@ const monetagUrl = 'https://omg10.com/4/9027972';
       width: 100%;
       aspect-ratio: 16 / 9;
       overflow: hidden;
+      display: flex;
+      align-items: center;
+      justify-content: center;
       border: 1px solid rgba(255, 255, 255, 0.08);
       border-radius: 12px;
       background: #050506;
@@ -1148,15 +1238,15 @@ const monetagUrl = 'https://omg10.com/4/9027972';
     .player-container iframe {
       width: 100%;
       height: 100%;
+      flex: 0 0 auto;
       display: block;
       border: 0;
+      margin: 0 auto;
     }
 
-    /*
-     * -------------------------------------------------------
+    /* -------------------------------------------------------
      * REBELVAULT PLAYER PROMO
-     * -------------------------------------------------------
-     */
+     * ------------------------------------------------------- */
 
     .rebelvault-promo {
       position: absolute;
@@ -1272,6 +1362,141 @@ const monetagUrl = 'https://omg10.com/4/9027972';
       transform: scale(1.06);
     }
 
+    /* -------------------------------------------------------
+     * FINAL SUPPORT CARD
+     * ------------------------------------------------------- */
+
+    .rebelvault-support {
+      position: absolute;
+      left: 50%;
+      bottom: 18px;
+      z-index: 7;
+
+      width: min(390px, calc(100% - 28px));
+
+      padding: 15px 18px 16px;
+
+      border: 1px solid rgba(255, 255, 255, 0.16);
+      border-radius: 12px;
+
+      background:
+        linear-gradient(
+          135deg,
+          rgba(34, 20, 53, 0.97),
+          rgba(24, 28, 55, 0.97)
+        );
+
+      box-shadow:
+        0 18px 45px rgba(0, 0, 0, 0.52),
+        0 0 28px rgba(178, 48, 139, 0.16);
+
+      backdrop-filter: blur(14px);
+      -webkit-backdrop-filter: blur(14px);
+
+      text-align: center;
+
+      opacity: 0;
+      visibility: hidden;
+      transform: translate(-50%, 12px) scale(0.98);
+
+      pointer-events: none;
+
+      transition:
+        opacity 0.35s ease,
+        transform 0.35s ease,
+        visibility 0.35s ease;
+    }
+
+    .rebelvault-support.is-visible {
+      opacity: 0.98;
+      visibility: visible;
+      transform: translate(-50%, 0) scale(1);
+      pointer-events: auto;
+    }
+
+    .rebelvault-support-close {
+      position: absolute;
+      top: 8px;
+      right: 9px;
+
+      width: 22px;
+      height: 22px;
+
+      display: flex;
+      align-items: center;
+      justify-content: center;
+
+      padding: 0;
+
+      border: 1px solid rgba(255, 255, 255, 0.12);
+      border-radius: 50%;
+
+      background: rgba(255, 255, 255, 0.08);
+      color: rgba(255, 255, 255, 0.72);
+
+      font-family: inherit;
+      font-size: 15px;
+      line-height: 1;
+
+      cursor: pointer;
+    }
+
+    .rebelvault-support-title {
+      padding-right: 15px;
+      color: #ffffff;
+      font-size: 13px;
+      line-height: 1.35;
+      letter-spacing: 0.25px;
+    }
+
+    .rebelvault-support-text {
+      margin-top: 5px;
+      color: rgba(255, 255, 255, 0.72);
+      font-size: 10px;
+      line-height: 1.4;
+    }
+
+    .rebelvault-support-link {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+
+      margin-top: 11px;
+      padding: 8px 12px;
+
+      border: 1px solid rgba(255, 255, 255, 0.16);
+      border-radius: 7px;
+
+      background:
+        linear-gradient(
+          135deg,
+          rgba(150, 35, 112, 0.95),
+          rgba(72, 38, 125, 0.95)
+        );
+
+      color: #ffffff;
+
+      font-size: 10px;
+      font-weight: 900;
+      letter-spacing: 0.65px;
+      text-decoration: none;
+
+      box-shadow: 0 6px 18px rgba(0, 0, 0, 0.28);
+
+      transition:
+        transform 0.2s ease,
+        filter 0.2s ease;
+    }
+
+    .rebelvault-support-link:hover {
+      transform: translateY(-1px);
+      filter: brightness(1.12);
+    }
+
+    /* -------------------------------------------------------
+     * FULLSCREEN
+     * ------------------------------------------------------- */
+
     .player-fullscreen-btn,
     .player-fullscreen-close {
       appearance: none;
@@ -1291,7 +1516,7 @@ const monetagUrl = 'https://omg10.com/4/9027972';
       position: absolute;
       top: 14px;
       right: 14px;
-      z-index: 5;
+      z-index: 8;
       padding: 10px 13px;
       border-radius: 7px;
     }
@@ -1310,15 +1535,32 @@ const monetagUrl = 'https://omg10.com/4/9027972';
       background: rgba(255, 255, 255, 0.12);
     }
 
+    /*
+     * Browser fullscreen:
+     * keep the player centered in the viewport.
+     * This prevents the video from sitting against
+     * one side on mobile devices.
+     */
     .player-container:fullscreen {
+      position: fixed;
+      inset: 0;
+
+      display: flex;
+      align-items: center;
+      justify-content: center;
+
       width: 100vw;
       height: 100vh;
       height: 100dvh;
+
       max-width: none;
       aspect-ratio: auto;
+
       margin: 0;
+
       border: 0;
       border-radius: 0;
+
       box-shadow: none;
       background: #000;
     }
@@ -1326,6 +1568,9 @@ const monetagUrl = 'https://omg10.com/4/9027972';
     .player-container:fullscreen iframe {
       width: 100%;
       height: 100%;
+      max-width: 100vw;
+      max-height: 100dvh;
+      margin: auto;
     }
 
     body.player-cinema-mode {
@@ -1335,15 +1580,25 @@ const monetagUrl = 'https://omg10.com/4/9027972';
     body.player-cinema-mode .player-container {
       position: fixed;
       inset: 0;
+
       z-index: 2147483000;
+
+      display: flex;
+      align-items: center;
+      justify-content: center;
+
       width: 100vw;
       height: 100vh;
       height: 100dvh;
+
       max-width: none;
       aspect-ratio: auto;
+
       margin: 0;
+
       border: 0;
       border-radius: 0;
+
       box-shadow: none;
       background: #000;
     }
@@ -1351,6 +1606,9 @@ const monetagUrl = 'https://omg10.com/4/9027972';
     body.player-cinema-mode .player-container iframe {
       width: 100%;
       height: 100%;
+      max-width: 100vw;
+      max-height: 100dvh;
+      margin: auto;
     }
 
     body.telegram-player-fullscreen {
@@ -1363,15 +1621,25 @@ const monetagUrl = 'https://omg10.com/4/9027972';
     body.telegram-player-fullscreen .player-container {
       position: fixed;
       inset: 0;
+
       z-index: 2147483000;
+
+      display: flex;
+      align-items: center;
+      justify-content: center;
+
       width: 100vw;
       height: 100vh;
       height: 100dvh;
+
       max-width: none;
       aspect-ratio: auto;
+
       margin: 0;
+
       border: 0;
       border-radius: 0;
+
       box-shadow: none;
       background: #000;
     }
@@ -1379,6 +1647,9 @@ const monetagUrl = 'https://omg10.com/4/9027972';
     body.telegram-player-fullscreen .player-container iframe {
       width: 100%;
       height: 100%;
+      max-width: 100vw;
+      max-height: 100dvh;
+      margin: auto;
     }
 
     .watch-bottom-cta {
@@ -1470,6 +1741,41 @@ const monetagUrl = 'https://omg10.com/4/9027972';
         width: 21px;
         height: 21px;
         font-size: 15px;
+      }
+
+      .rebelvault-support {
+        bottom: 12px;
+        width: min(360px, calc(100% - 20px));
+        padding: 13px 14px 14px;
+        border-radius: 10px;
+      }
+
+      .rebelvault-support-title {
+        font-size: 12px;
+      }
+
+      .rebelvault-support-text {
+        font-size: 9px;
+      }
+
+      .rebelvault-support-link {
+        margin-top: 9px;
+        padding: 7px 10px;
+        font-size: 9px;
+      }
+
+      /*
+       * On portrait mobile the player remains centered.
+       * The browser/YouTube player handles the 16:9
+       * letterboxing symmetrically instead of leaving
+       * the video stuck to the left side.
+       */
+      .player-container:fullscreen iframe,
+      body.player-cinema-mode .player-container iframe,
+      body.telegram-player-fullscreen .player-container iframe {
+        width: 100%;
+        height: 100%;
+        margin: 0 auto;
       }
     }
   </style>
