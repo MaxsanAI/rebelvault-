@@ -169,13 +169,15 @@ const monetagUrl = 'https://omg10.com/4/9027972';
               aria-hidden="true"
             >
               <div class="rebelvault-promo-copy">
+
                 <span class="rebelvault-promo-brand">
-                  ◈ REBELVAULT
+                  🎬 REBELVAULT
                 </span>
 
                 <span class="rebelvault-promo-text">
-                  NEW MOVIE EVERY DAY
+                  🍿 NEW MOVIE EVERY DAY
                 </span>
+
               </div>
 
               <button
@@ -336,11 +338,7 @@ const monetagUrl = 'https://omg10.com/4/9027972';
        * 2. Around 50% of the movie
        * 3. Around 90% of the movie
        *
-       * Each display lasts 7 seconds.
-       *
-       * The overlay uses pointer-events carefully so it does
-       * not interfere with the YouTube player except for its
-       * own small close button.
+       * Each display lasts 10 seconds.
        */
 
       const promo =
@@ -361,7 +359,7 @@ const monetagUrl = 'https://omg10.com/4/9027972';
 
         let manualClosed = false;
 
-        const SHOW_DURATION = 7000;
+        const SHOW_DURATION = 10000;
 
         function showPromo(stage) {
           if (manualClosed) {
@@ -422,10 +420,7 @@ const monetagUrl = 'https://omg10.com/4/9027972';
          * FALLBACK TIMING
          * -------------------------------------------------------
          *
-         * This guarantees the promo still works even if the
-         * embedded player does not expose playback time.
-         *
-         * First appearance:
+         * First:
          * approximately 10 seconds after page load.
          *
          * Middle:
@@ -434,8 +429,7 @@ const monetagUrl = 'https://omg10.com/4/9027972';
          * Final:
          * approximately 10 minutes after page load.
          *
-         * The YouTube API logic below will override these
-         * timings when actual playback time is available.
+         * YouTube playback timing overrides these when available.
          */
 
         const fallbackFirstTimer =
@@ -457,10 +451,6 @@ const monetagUrl = 'https://omg10.com/4/9027972';
          * -------------------------------------------------------
          * YOUTUBE IFRAME API
          * -------------------------------------------------------
-         *
-         * We attempt to connect to the YouTube player API.
-         * If it works, the promo is based on actual movie
-         * progress rather than page time.
          */
 
         let youtubePlayer = null;
@@ -570,8 +560,7 @@ const monetagUrl = 'https://omg10.com/4/9027972';
               );
           } catch {
             /*
-             * If YouTube API initialization fails,
-             * fallback timers continue working.
+             * Fallback timers continue working.
              */
           }
         }
@@ -641,18 +630,10 @@ const monetagUrl = 'https://omg10.com/4/9027972';
           }
         }
 
-        /*
-         * Start API loading after the page is ready.
-         */
         window.setTimeout(() => {
           loadYouTubeAPI();
         }, 1200);
 
-        /*
-         * Prevent unused fallback timer warnings from
-         * affecting anything else. Timers intentionally
-         * remain active as a safety fallback.
-         */
         void fallbackFirstTimer;
         void fallbackMiddleTimer;
         void fallbackFinalTimer;
@@ -694,14 +675,6 @@ const monetagUrl = 'https://omg10.com/4/9027972';
       let telegramWebApp = null;
       let telegramReady = false;
 
-      /*
-       * Load Telegram SDK immediately.
-       *
-       * IMPORTANT:
-       * We do not wait for this promise inside the
-       * fullscreen click handler. Waiting can lose the
-       * browser's user-gesture activation.
-       */
       const telegramSDKPromise =
         loadTelegramSDK();
 
@@ -845,12 +818,6 @@ const monetagUrl = 'https://omg10.com/4/9027972';
               'fullscreenFailed',
               () => {
 
-                /*
-                 * Telegram refused native fullscreen.
-                 *
-                 * The player remains in our local
-                 * cinema fallback.
-                 */
                 document.body.classList.add(
                   'player-cinema-mode'
                 );
@@ -905,19 +872,8 @@ const monetagUrl = 'https://omg10.com/4/9027972';
         }
       }
 
-      /*
-       * THIS IS THE IMPORTANT PART.
-       *
-       * Everything happens directly inside the user's
-       * fullscreen button click.
-       *
-       * No await before Telegram requestFullscreen().
-       */
       const enterFullscreen = () => {
 
-        /*
-         * Local visual fallback starts immediately.
-         */
         document.body.classList.add(
           'player-cinema-mode'
         );
@@ -926,12 +882,6 @@ const monetagUrl = 'https://omg10.com/4/9027972';
 
         requestLandscape();
 
-        /*
-         * Telegram native fullscreen.
-         *
-         * This is what can remove Telegram's Mini App
-         * native header.
-         */
         if (
           telegramReady &&
           telegramWebApp &&
@@ -948,13 +898,6 @@ const monetagUrl = 'https://omg10.com/4/9027972';
           return;
         }
 
-        /*
-         * If the Telegram SDK was not ready yet,
-         * try the browser Fullscreen API directly.
-         *
-         * This still happens synchronously from the
-         * user's click.
-         */
         try {
 
           if (
@@ -983,9 +926,6 @@ const monetagUrl = 'https://omg10.com/4/9027972';
 
       const exitFullscreen = async () => {
 
-        /*
-         * Exit Telegram native fullscreen.
-         */
         try {
 
           if (
@@ -1002,9 +942,6 @@ const monetagUrl = 'https://omg10.com/4/9027972';
           // Ignore Telegram exit errors.
         }
 
-        /*
-         * Exit browser fullscreen if used.
-         */
         try {
 
           if (
@@ -1044,9 +981,6 @@ const monetagUrl = 'https://omg10.com/4/9027972';
         exitFullscreen
       );
 
-      /*
-       * Browser fullscreen state.
-       */
       document.addEventListener(
         'fullscreenchange',
         () => {
@@ -1220,90 +1154,93 @@ const monetagUrl = 'https://omg10.com/4/9027972';
 
     /*
      * -------------------------------------------------------
-     * SMALL REBELVAULT PROMO
+     * REBELVAULT PLAYER PROMO
      * -------------------------------------------------------
      */
 
     .rebelvault-promo {
       position: absolute;
-      top: 14px;
-      left: 14px;
+      top: 16px;
+      left: 16px;
       z-index: 4;
 
       display: flex;
       align-items: center;
-      gap: 9px;
+      gap: 12px;
 
       width: max-content;
-      max-width: min(245px, calc(100% - 28px));
+      max-width: min(300px, calc(100% - 32px));
 
-      padding: 8px 9px 8px 11px;
+      padding: 11px 12px 11px 14px;
 
-      border: 1px solid rgba(255, 255, 255, 0.12);
-      border-radius: 7px;
+      border: 1px solid rgba(255, 255, 255, 0.18);
+      border-radius: 10px;
 
       background:
         linear-gradient(
           135deg,
-          rgba(12, 13, 18, 0.94),
-          rgba(23, 24, 31, 0.88)
+          rgba(93, 19, 67, 0.96) 0%,
+          rgba(45, 24, 88, 0.95) 48%,
+          rgba(18, 25, 53, 0.94) 100%
         );
 
       box-shadow:
-        0 10px 28px rgba(0, 0, 0, 0.35);
+        0 12px 35px rgba(0, 0, 0, 0.45),
+        0 0 22px rgba(178, 48, 139, 0.18);
 
-      backdrop-filter: blur(10px);
-      -webkit-backdrop-filter: blur(10px);
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
 
       opacity: 0;
       visibility: hidden;
-      transform: translateY(-5px);
+      transform: translateY(-7px) scale(0.98);
 
       pointer-events: none;
 
       transition:
-        opacity 0.3s ease,
-        transform 0.3s ease,
-        visibility 0.3s ease;
+        opacity 0.35s ease,
+        transform 0.35s ease,
+        visibility 0.35s ease;
     }
 
     .rebelvault-promo.is-visible {
-      opacity: 0.94;
+      opacity: 0.97;
       visibility: visible;
-      transform: translateY(0);
+      transform: translateY(0) scale(1);
       pointer-events: auto;
     }
 
     .rebelvault-promo-copy {
       display: flex;
       flex-direction: column;
-      gap: 2px;
+      gap: 4px;
       min-width: 0;
     }
 
     .rebelvault-promo-brand {
       color: #ffffff;
-      font-size: 9px;
+      font-size: 11px;
       line-height: 1.1;
       font-weight: 900;
-      letter-spacing: 0.8px;
+      letter-spacing: 1px;
       white-space: nowrap;
+      text-shadow: 0 1px 10px rgba(255, 255, 255, 0.15);
     }
 
     .rebelvault-promo-text {
-      color: #aeb4bf;
-      font-size: 8px;
+      color: rgba(255, 255, 255, 0.82);
+      font-size: 10px;
       line-height: 1.2;
-      font-weight: 700;
-      letter-spacing: 0.7px;
+      font-weight: 800;
+      letter-spacing: 0.75px;
       white-space: nowrap;
     }
 
     .rebelvault-promo-close {
       flex: 0 0 auto;
 
-      width: 19px;
-      height: 19px;
+      width: 23px;
+      height: 23px;
 
       display: flex;
       align-items: center;
@@ -1311,26 +1248,28 @@ const monetagUrl = 'https://omg10.com/4/9027972';
 
       padding: 0;
 
-      border: 0;
+      border: 1px solid rgba(255, 255, 255, 0.12);
       border-radius: 50%;
 
-      background: rgba(255, 255, 255, 0.08);
-      color: #aeb4bf;
+      background: rgba(255, 255, 255, 0.10);
+      color: rgba(255, 255, 255, 0.75);
 
       font-family: inherit;
-      font-size: 14px;
+      font-size: 16px;
       line-height: 1;
 
       cursor: pointer;
 
       transition:
         background 0.2s ease,
-        color 0.2s ease;
+        color 0.2s ease,
+        transform 0.2s ease;
     }
 
     .rebelvault-promo-close:hover {
-      background: rgba(255, 255, 255, 0.16);
+      background: rgba(255, 255, 255, 0.20);
       color: #ffffff;
+      transform: scale(1.06);
     }
 
     .player-fullscreen-btn,
@@ -1371,9 +1310,6 @@ const monetagUrl = 'https://omg10.com/4/9027972';
       background: rgba(255, 255, 255, 0.12);
     }
 
-    /*
-     * Native browser fullscreen for the player container.
-     */
     .player-container:fullscreen {
       width: 100vw;
       height: 100vh;
@@ -1392,12 +1328,6 @@ const monetagUrl = 'https://omg10.com/4/9027972';
       height: 100%;
     }
 
-    /*
-     * Local fallback.
-     *
-     * Used only if Telegram/browser fullscreen cannot
-     * be entered.
-     */
     body.player-cinema-mode {
       overflow: hidden;
     }
@@ -1423,12 +1353,6 @@ const monetagUrl = 'https://omg10.com/4/9027972';
       height: 100%;
     }
 
-    /*
-     * Telegram native fullscreen has been confirmed.
-     *
-     * This affects ONLY the movie player state.
-     * The rest of RebelVault is untouched.
-     */
     body.telegram-player-fullscreen {
       overflow: hidden;
       width: 100%;
@@ -1530,20 +1454,22 @@ const monetagUrl = 'https://omg10.com/4/9027972';
         top: 10px;
         left: 10px;
         max-width: calc(100% - 20px);
-        padding: 7px 8px 7px 9px;
+        padding: 9px 10px 9px 11px;
+        border-radius: 9px;
       }
 
       .rebelvault-promo-brand {
-        font-size: 8px;
+        font-size: 9px;
       }
 
       .rebelvault-promo-text {
-        font-size: 7px;
+        font-size: 8px;
       }
 
       .rebelvault-promo-close {
-        width: 18px;
-        height: 18px;
+        width: 21px;
+        height: 21px;
+        font-size: 15px;
       }
     }
   </style>
