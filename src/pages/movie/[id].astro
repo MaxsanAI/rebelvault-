@@ -162,6 +162,32 @@ const monetagUrl = 'https://omg10.com/4/9027972';
               allowfullscreen
             ></iframe>
 
+            <!-- Small RebelVault promo -->
+            <div
+              class="rebelvault-promo"
+              id="rebelvault-promo"
+              aria-hidden="true"
+            >
+              <div class="rebelvault-promo-copy">
+                <span class="rebelvault-promo-brand">
+                  ◈ REBELVAULT
+                </span>
+
+                <span class="rebelvault-promo-text">
+                  NEW MOVIE EVERY DAY
+                </span>
+              </div>
+
+              <button
+                type="button"
+                class="rebelvault-promo-close"
+                id="rebelvault-promo-close"
+                aria-label="Close promotion"
+              >
+                ×
+              </button>
+            </div>
+
             <button
               type="button"
               class="player-fullscreen-btn"
@@ -299,7 +325,341 @@ const monetagUrl = 'https://omg10.com/4/9027972';
 
   <script is:inline>
     (() => {
-      const userAgent = navigator.userAgent || '';
+      /*
+       * -------------------------------------------------------
+       * REBELVAULT SMALL PLAYER PROMO
+       * -------------------------------------------------------
+       *
+       * Shows a small RebelVault message:
+       *
+       * 1. Around 10 seconds
+       * 2. Around 50% of the movie
+       * 3. Around 90% of the movie
+       *
+       * Each display lasts 7 seconds.
+       *
+       * The overlay uses pointer-events carefully so it does
+       * not interfere with the YouTube player except for its
+       * own small close button.
+       */
+
+      const promo =
+        document.getElementById('rebelvault-promo');
+
+      const promoClose =
+        document.getElementById('rebelvault-promo-close');
+
+      const player =
+        document.getElementById('movie-player');
+
+      if (promo && promoClose && player) {
+        let promoTimer = null;
+
+        let firstShown = false;
+        let middleShown = false;
+        let finalShown = false;
+
+        let manualClosed = false;
+
+        const SHOW_DURATION = 7000;
+
+        function showPromo(stage) {
+          if (manualClosed) {
+            return;
+          }
+
+          if (stage === 'first' && firstShown) {
+            return;
+          }
+
+          if (stage === 'middle' && middleShown) {
+            return;
+          }
+
+          if (stage === 'final' && finalShown) {
+            return;
+          }
+
+          if (stage === 'first') {
+            firstShown = true;
+          }
+
+          if (stage === 'middle') {
+            middleShown = true;
+          }
+
+          if (stage === 'final') {
+            finalShown = true;
+          }
+
+          promo.classList.add('is-visible');
+          promo.setAttribute('aria-hidden', 'false');
+
+          if (promoTimer) {
+            window.clearTimeout(promoTimer);
+          }
+
+          promoTimer = window.setTimeout(() => {
+            hidePromo();
+          }, SHOW_DURATION);
+        }
+
+        function hidePromo() {
+          promo.classList.remove('is-visible');
+          promo.setAttribute('aria-hidden', 'true');
+        }
+
+        promoClose.addEventListener('click', (event) => {
+          event.preventDefault();
+          event.stopPropagation();
+
+          manualClosed = true;
+          hidePromo();
+        });
+
+        /*
+         * -------------------------------------------------------
+         * FALLBACK TIMING
+         * -------------------------------------------------------
+         *
+         * This guarantees the promo still works even if the
+         * embedded player does not expose playback time.
+         *
+         * First appearance:
+         * approximately 10 seconds after page load.
+         *
+         * Middle:
+         * approximately 5 minutes after page load.
+         *
+         * Final:
+         * approximately 10 minutes after page load.
+         *
+         * The YouTube API logic below will override these
+         * timings when actual playback time is available.
+         */
+
+        const fallbackFirstTimer =
+          window.setTimeout(() => {
+            showPromo('first');
+          }, 10000);
+
+        const fallbackMiddleTimer =
+          window.setTimeout(() => {
+            showPromo('middle');
+          }, 300000);
+
+        const fallbackFinalTimer =
+          window.setTimeout(() => {
+            showPromo('final');
+          }, 600000);
+
+        /*
+         * -------------------------------------------------------
+         * YOUTUBE IFRAME API
+         * -------------------------------------------------------
+         *
+         * We attempt to connect to the YouTube player API.
+         * If it works, the promo is based on actual movie
+         * progress rather than page time.
+         */
+
+        let youtubePlayer = null;
+        let youtubeReady = false;
+
+        function loadYouTubeAPI() {
+          if (window.YT && window.YT.Player) {
+            initializeYouTubePlayer();
+            return;
+          }
+
+          if (
+            document.querySelector(
+              'script[data-rebelvault-youtube-api]'
+            )
+          ) {
+            return;
+          }
+
+          const script =
+            document.createElement('script');
+
+          script.src =
+            'https://www.youtube.com/iframe_api';
+
+          script.async = true;
+
+          script.dataset.rebelvaultYoutubeApi =
+            'true';
+
+          document.head.appendChild(script);
+
+          const previousCallback =
+            window.onYouTubeIframeAPIReady;
+
+          window.onYouTubeIframeAPIReady = () => {
+            if (typeof previousCallback === 'function') {
+              previousCallback();
+            }
+
+            initializeYouTubePlayer();
+          };
+        }
+
+        function getYouTubeVideoId() {
+          const iframe =
+            player.querySelector('iframe');
+
+          if (!iframe) {
+            return null;
+          }
+
+          try {
+            const url =
+              new URL(iframe.src);
+
+            const pathParts =
+              url.pathname.split('/');
+
+            const embedIndex =
+              pathParts.indexOf('embed');
+
+            if (embedIndex !== -1) {
+              return (
+                pathParts[embedIndex + 1] || null
+              );
+            }
+
+            return null;
+          } catch {
+            return null;
+          }
+        }
+
+        function initializeYouTubePlayer() {
+          if (
+            youtubePlayer ||
+            !window.YT ||
+            !window.YT.Player
+          ) {
+            return;
+          }
+
+          const videoId =
+            getYouTubeVideoId();
+
+          if (!videoId) {
+            return;
+          }
+
+          try {
+            youtubePlayer =
+              new window.YT.Player(
+                player.querySelector('iframe'),
+                {
+                  events: {
+                    onReady: () => {
+                      youtubeReady = true;
+
+                      window.setInterval(
+                        checkMovieProgress,
+                        1000
+                      );
+                    }
+                  }
+                }
+              );
+          } catch {
+            /*
+             * If YouTube API initialization fails,
+             * fallback timers continue working.
+             */
+          }
+        }
+
+        function checkMovieProgress() {
+          if (
+            !youtubeReady ||
+            !youtubePlayer
+          ) {
+            return;
+          }
+
+          try {
+            const duration =
+              youtubePlayer.getDuration();
+
+            const currentTime =
+              youtubePlayer.getCurrentTime();
+
+            if (
+              !duration ||
+              !currentTime
+            ) {
+              return;
+            }
+
+            const progress =
+              currentTime / duration;
+
+            /*
+             * First appearance:
+             * approximately 10 seconds into the movie.
+             */
+            if (
+              currentTime >= 10 &&
+              !firstShown
+            ) {
+              showPromo('first');
+            }
+
+            /*
+             * Middle appearance:
+             * approximately halfway through.
+             */
+            if (
+              progress >= 0.5 &&
+              !middleShown
+            ) {
+              showPromo('middle');
+            }
+
+            /*
+             * Final appearance:
+             * approximately 90% through.
+             */
+            if (
+              progress >= 0.9 &&
+              !finalShown
+            ) {
+              showPromo('final');
+            }
+          } catch {
+            /*
+             * Ignore player API errors.
+             * Fallback timers remain active.
+             */
+          }
+        }
+
+        /*
+         * Start API loading after the page is ready.
+         */
+        window.setTimeout(() => {
+          loadYouTubeAPI();
+        }, 1200);
+
+        /*
+         * Prevent unused fallback timer warnings from
+         * affecting anything else. Timers intentionally
+         * remain active as a safety fallback.
+         */
+        void fallbackFirstTimer;
+        void fallbackMiddleTimer;
+        void fallbackFinalTimer;
+      }
+
+      const userAgent =
+        navigator.userAgent || '';
 
       /*
        * Telegram-only fullscreen integration.
@@ -313,16 +673,19 @@ const monetagUrl = 'https://omg10.com/4/9027972';
         return;
       }
 
-      const player =
-        document.getElementById('movie-player');
-
       const fullscreenButton =
         document.getElementById('player-fullscreen');
 
       const closeButton =
-        document.getElementById('player-fullscreen-close');
+        document.getElementById(
+          'player-fullscreen-close'
+        );
 
-      if (!player || !fullscreenButton || !closeButton) {
+      if (
+        !player ||
+        !fullscreenButton ||
+        !closeButton
+      ) {
         return;
       }
 
@@ -516,7 +879,8 @@ const monetagUrl = 'https://omg10.com/4/9027972';
 
             if (
               result &&
-              typeof result.catch === 'function'
+              typeof result.catch ===
+                'function'
             ) {
               result.catch(() => {});
             }
@@ -854,6 +1218,121 @@ const monetagUrl = 'https://omg10.com/4/9027972';
       border: 0;
     }
 
+    /*
+     * -------------------------------------------------------
+     * SMALL REBELVAULT PROMO
+     * -------------------------------------------------------
+     */
+
+    .rebelvault-promo {
+      position: absolute;
+      top: 14px;
+      left: 14px;
+      z-index: 4;
+
+      display: flex;
+      align-items: center;
+      gap: 9px;
+
+      width: max-content;
+      max-width: min(245px, calc(100% - 28px));
+
+      padding: 8px 9px 8px 11px;
+
+      border: 1px solid rgba(255, 255, 255, 0.12);
+      border-radius: 7px;
+
+      background:
+        linear-gradient(
+          135deg,
+          rgba(12, 13, 18, 0.94),
+          rgba(23, 24, 31, 0.88)
+        );
+
+      box-shadow:
+        0 10px 28px rgba(0, 0, 0, 0.35);
+
+      backdrop-filter: blur(10px);
+      -webkit-backdrop-filter: blur(10px);
+
+      opacity: 0;
+      visibility: hidden;
+      transform: translateY(-5px);
+
+      pointer-events: none;
+
+      transition:
+        opacity 0.3s ease,
+        transform 0.3s ease,
+        visibility 0.3s ease;
+    }
+
+    .rebelvault-promo.is-visible {
+      opacity: 0.94;
+      visibility: visible;
+      transform: translateY(0);
+      pointer-events: auto;
+    }
+
+    .rebelvault-promo-copy {
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+      min-width: 0;
+    }
+
+    .rebelvault-promo-brand {
+      color: #ffffff;
+      font-size: 9px;
+      line-height: 1.1;
+      font-weight: 900;
+      letter-spacing: 0.8px;
+      white-space: nowrap;
+    }
+
+    .rebelvault-promo-text {
+      color: #aeb4bf;
+      font-size: 8px;
+      line-height: 1.2;
+      font-weight: 700;
+      letter-spacing: 0.7px;
+      white-space: nowrap;
+    }
+
+    .rebelvault-promo-close {
+      flex: 0 0 auto;
+
+      width: 19px;
+      height: 19px;
+
+      display: flex;
+      align-items: center;
+      justify-content: center;
+
+      padding: 0;
+
+      border: 0;
+      border-radius: 50%;
+
+      background: rgba(255, 255, 255, 0.08);
+      color: #aeb4bf;
+
+      font-family: inherit;
+      font-size: 14px;
+      line-height: 1;
+
+      cursor: pointer;
+
+      transition:
+        background 0.2s ease,
+        color 0.2s ease;
+    }
+
+    .rebelvault-promo-close:hover {
+      background: rgba(255, 255, 255, 0.16);
+      color: #ffffff;
+    }
+
     .player-fullscreen-btn,
     .player-fullscreen-close {
       appearance: none;
@@ -1045,6 +1524,26 @@ const monetagUrl = 'https://omg10.com/4/9027972';
       .watch-cta .btn {
         width: 100%;
         text-align: center;
+      }
+
+      .rebelvault-promo {
+        top: 10px;
+        left: 10px;
+        max-width: calc(100% - 20px);
+        padding: 7px 8px 7px 9px;
+      }
+
+      .rebelvault-promo-brand {
+        font-size: 8px;
+      }
+
+      .rebelvault-promo-text {
+        font-size: 7px;
+      }
+
+      .rebelvault-promo-close {
+        width: 18px;
+        height: 18px;
       }
     }
   </style>
