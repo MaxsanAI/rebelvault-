@@ -1221,19 +1221,20 @@ const monetagUrl = 'https://omg10.com/4/9027972';
       color: #fff;
     }
 
-    .player-container {
-      position: relative;
-      width: 100%;
-      aspect-ratio: 16 / 9;
-      overflow: hidden;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      border: 1px solid rgba(255, 255, 255, 0.08);
-      border-radius: 12px;
-      background: #050506;
-      box-shadow: 0 30px 80px rgba(0, 0, 0, 0.4);
-    }
+.player-container {
+  position: relative;
+  width: min(100%, 1080px);
+  aspect-ratio: 16 / 9;
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0 auto;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 12px;
+  background: #050506;
+  box-shadow: 0 30px 80px rgba(0, 0, 0, 0.4);
+}
 
     .player-container iframe {
       width: 100%;
