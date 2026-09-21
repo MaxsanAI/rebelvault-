@@ -1,5 +1,5 @@
-import { getGenres, getMovies } from '../../lib/movies';
-import { getJournalArticles } from '../../lib/journal';
+import { getGenres, getMovies } from '../lib/movies';
+import { getJournalArticles } from '../lib/journal';
 
 const SITE_URL = 'https://rebelvault.pages.dev';
 
