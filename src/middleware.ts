@@ -1,4 +1,3 @@
-```ts
 import { defineMiddleware } from 'astro:middleware';
 import { isAdminAuthenticated } from './lib/admin-auth';
 
@@ -207,4 +206,4 @@ export const onRequest = defineMiddleware(
     return next();
   }
 );
-```
+
